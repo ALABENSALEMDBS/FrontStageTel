@@ -1,0 +1,187 @@
+<div class="signup-container">
+  <div class="signup-card">
+    <div class="signup-header">
+      <img src="images/tt-logo.png" alt="Tunisie Telecom" class="logo" routerLink="/home">
+      <h1>Créer un compte</h1>
+      <p>Rejoignez la famille Tunisie Telecom</p>
+    </div>
+
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nomUser">Nom *</label>
+          <div class="input-container">
+            <input
+              type="text"
+              id="nomUser"
+              formControlName="nomUser"
+              placeholder="Votre nom"
+              [class.error]="signupForm.get('nomUser')?.invalid && signupForm.get('nomUser')?.touched"
+            >
+            <span class="input-icon">👤</span>
+          </div>
+          <div class="error-message" *ngIf="signupForm.get('nomUser')?.invalid && signupForm.get('nomUser')?.touched">
+            <span *ngIf="signupForm.get('nomUser')?.errors?.['required']">Le nom est requis</span>
+            <span *ngIf="signupForm.get('nomUser')?.errors?.['minlength']">Le nom doit contenir au moins 2 caractères</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="prenomUser">Prénom *</label>
+          <div class="input-container">
+            <input
+              type="text"
+              id="prenomUser"
+              formControlName="prenomUser"
+              placeholder="Votre prénom"
+              [class.error]="signupForm.get('prenomUser')?.invalid && signupForm.get('prenomUser')?.touched"
+            >
+            <span class="input-icon">👤</span>
+          </div>
+          <div class="error-message" *ngIf="signupForm.get('prenomUser')?.invalid && signupForm.get('prenomUser')?.touched">
+            <span *ngIf="signupForm.get('prenomUser')?.errors?.['required']">Le prénom est requis</span>
+            <span *ngIf="signupForm.get('prenomUser')?.errors?.['minlength']">Le prénom doit contenir au moins 2 caractères</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="emailUser">Adresse email *</label>
+        <div class="input-container">
+          <input
+            type="email"
+            id="emailUser"
+            formControlName="emailUser"
+            placeholder="votre.email@example.com"
+            [class.error]="signupForm.get('emailUser')?.invalid && signupForm.get('emailUser')?.touched"
+          >
+          <span class="input-icon">📧</span>
+        </div>
+        <div class="error-message" *ngIf="signupForm.get('emailUser')?.invalid && signupForm.get('emailUser')?.touched">
+          <span *ngIf="signupForm.get('emailUser')?.errors?.['required']">L'email est requis</span>
+          <span *ngIf="signupForm.get('emailUser')?.errors?.['email']">Format d'email invalide</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="numeroLigne">Numéro de ligne *</label>
+        <div class="input-container">
+          <input
+            type="tel"
+            id="numeroLigne"
+            formControlName="numeroLigne"
+            placeholder="12345678"
+            maxlength="8"
+            [class.error]="signupForm.get('numeroLigne')?.invalid && signupForm.get('numeroLigne')?.touched"
+          >
+          <span class="input-icon">📞</span>
+        </div>
+        <div class="error-message" *ngIf="signupForm.get('numeroLigne')?.invalid && signupForm.get('numeroLigne')?.touched">
+          <span *ngIf="signupForm.get('numeroLigne')?.errors?.['required']">Le numéro de ligne est requis</span>
+          <span *ngIf="signupForm.get('numeroLigne')?.errors?.['pattern']">Le numéro doit contenir exactement 8 chiffres</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="passwordUser">Mot de passe *</label>
+          <div class="input-container">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="passwordUser"
+              formControlName="passwordUser"
+              placeholder="Mot de passe"
+              [class.error]="signupForm.get('passwordUser')?.invalid && signupForm.get('passwordUser')?.touched"
+            >
+            <span class="input-icon password-toggle" (click)="togglePasswordVisibility()">
+              {{ showPassword ? '👁️' : '🔒' }}
+            </span>
+          </div>
+          <div class="error-message" *ngIf="signupForm.get('passwordUser')?.invalid && signupForm.get('passwordUser')?.touched">
+            <span *ngIf="signupForm.get('passwordUser')?.errors?.['required']">Le mot de passe est requis</span>
+            <span *ngIf="signupForm.get('passwordUser')?.errors?.['minlength']">Le mot de passe doit contenir au moins 8 caractères</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="verifpassword">Confirmer le mot de passe *</label>
+          <div class="input-container">
+            <input
+              [type]="showVerifPassword ? 'text' : 'password'"
+              id="verifpassword"
+              formControlName="verifpassword"
+              placeholder="Confirmer le mot de passe"
+              [class.error]="signupForm.get('verifpassword')?.invalid && signupForm.get('verifpassword')?.touched"
+            >
+            <span class="input-icon password-toggle" (click)="toggleVerifPasswordVisibility()">
+              {{ showVerifPassword ? '👁️' : '🔒' }}
+            </span>
+          </div>
+          <div class="error-message" *ngIf="signupForm.get('verifpassword')?.invalid && signupForm.get('verifpassword')?.touched">
+            <span *ngIf="signupForm.get('verifpassword')?.errors?.['required']">La confirmation est requise</span>
+            <span *ngIf="signupForm.get('verifpassword')?.errors?.['passwordMismatch']">Les mots de passe ne correspondent pas</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="photoUser">Photo de profil</label>
+        <div class="file-input-container">
+          <input
+            type="file"
+            id="photoUser"
+            accept="image/*"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          >
+          <label for="photoUser" class="file-input-label">
+            <span class="file-icon">📷</span>
+            <span>{{ selectedFile ? selectedFile.name : 'Choisir une photo' }}</span>
+          </label>
+        </div>
+        <!-- Aperçu de la photo -->
+        <div class="file-preview" *ngIf="photoPreview">
+          <img [src]="photoPreview" alt="Aperçu de la photo" class="image-preview">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="documentContrat">Document de contrat *</label>
+        <div class="file-input-container">
+          <input
+            type="file"
+            id="documentContrat"
+            accept=".pdf,.jpg,.jpeg,.png,.gif"
+            (change)="onContractFileSelected($event)"
+            class="file-input"
+          >
+          <label for="documentContrat" class="file-input-label">
+            <span class="file-icon">📄</span>
+            <span>{{ selectedContractFile ? selectedContractFile.name : 'Choisir le document de contrat (PDF ou Image)' }}</span>
+          </label>
+        </div>
+        <!-- Aperçu du document -->
+        <div class="file-preview" *ngIf="contractPreview">
+          <!-- Aperçu pour les images -->
+          <img *ngIf="isImageFile(selectedContractFile)" [src]="contractPreview" alt="Aperçu du document" class="image-preview">
+          <!-- Aperçu pour les PDF -->
+          <embed *ngIf="isPdfFile(selectedContractFile)" [src]="contractPreview" type="application/pdf" class="pdf-preview">
+        </div>
+        <div class="error-message" *ngIf="signupForm.get('documentContrat')?.invalid && signupForm.get('documentContrat')?.touched">
+          <span *ngIf="signupForm.get('documentContrat')?.errors?.['required']">Le document de contrat est requis</span>
+        </div>
+      </div>
+
+      <button type="submit" class="signup-btn" [disabled]="signupForm.invalid">
+        Créer mon compte
+      </button>
+    </form>
+
+    <div class="login-link">
+      <p>Vous avez déjà un compte ?</p>
+      <button class="login-btn" routerLink="/login">
+        Se connecter
+      </button>
+    </div>
+  </div>
+</div>
