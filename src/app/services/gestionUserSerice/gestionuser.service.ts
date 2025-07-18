@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { UserRegistrationRequest } from '../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../core/models/Utilisateur';
+import { ForgotPasswordRequest } from '../../../core/models/ForgotPasswordRequest';
+import { ResetPasswordRequest } from '../../../core/models/ResetPasswordRequest';
 
 @Injectable({
   providedIn: 'root'
@@ -44,6 +46,28 @@ export class GestionuserService {
     request.photoUser = formData.photoUser || '';
     
     return request;
+  }
+
+  /**
+   * Demande de réinitialisation de mot de passe
+   * @param email - L'email de l'utilisateur
+   * @returns Observable<string> - Message de confirmation
+   */
+  sendResetCode(email: string): Observable<string> {
+    const request: ForgotPasswordRequest = { email };
+    return this.http.post(`${this.baseUrl}/forgot-password`, request, { responseType: 'text' });
+  }
+
+  /**
+   * Réinitialisation du mot de passe avec code de vérification
+   * @param email - L'email de l'utilisateur
+   * @param code - Le code de vérification
+   * @param newPassword - Le nouveau mot de passe
+   * @returns Observable<string> - Message de confirmation
+   */
+  resetPassword(email: string, code: string, newPassword: string): Observable<string> {
+    const request: ResetPasswordRequest = { email, code, newPassword };
+    return this.http.post(`${this.baseUrl}/reset-password`, request, { responseType: 'text' });
   }
 
 }
