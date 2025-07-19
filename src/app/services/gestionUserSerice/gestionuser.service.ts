@@ -100,6 +100,7 @@ export class GestionuserService {
      * @param loginResponse - La réponse de connexion du backend
      */
     saveUserSession(loginResponse: LoginResponse): void {
+      console.log("🔐 Sauvegarde de la session - Réponse backend:", loginResponse);
       localStorage.setItem("token", loginResponse.token);
       const userData = {
         idUser: loginResponse.id,
@@ -108,10 +109,12 @@ export class GestionuserService {
         emailUser: loginResponse.email,
         numeroLigne: loginResponse.numeroLigne,
         documentContrat: loginResponse.documentContrat,
-        // role: loginResponse.role,
-        photoUser: loginResponse.photoUser,
+        role: loginResponse.role || 'ROLE_CLIENT', // Activer le rôle avec valeur par défaut
+        photoUser: loginResponse.photoUser || null,
         etatCompte: loginResponse.etatCompte
       };
+      console.log("👤 Données utilisateur sauvegardées:", userData);
+      console.log("🎭 Rôle utilisateur:", userData.role);
       this.userStateService.setCurrentUser(userData);
     }
 
