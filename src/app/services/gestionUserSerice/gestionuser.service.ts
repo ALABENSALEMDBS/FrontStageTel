@@ -1,10 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { ForgotPasswordRequest } from '../../../core/models/ForgotPasswordRequest';
+import { LoginRequest } from '../../../core/models/LoginRequest';
+import { LoginResponse } from '../../../core/models/LoginResponse';
+import { ResetPasswordRequest } from '../../../core/models/ResetPasswordRequest';
 import { UserRegistrationRequest } from '../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../core/models/Utilisateur';
-import { ForgotPasswordRequest } from '../../../core/models/ForgotPasswordRequest';
-import { ResetPasswordRequest } from '../../../core/models/ResetPasswordRequest';
+import { UserStateService } from '../user-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +17,7 @@ export class GestionuserService {
 
   private baseUrl = 'http://localhost:8089/BackStageTel/user';
 
-  constructor(private http:HttpClient) { }
+  constructor(private http:HttpClient, private router:Router, private userStateService: UserStateService) { }
 
   /**
    * Inscription d'un nouvel utilisateur
@@ -69,5 +73,54 @@ export class GestionuserService {
     const request: ResetPasswordRequest = { email, code, newPassword };
     return this.http.post(`${this.baseUrl}/reset-password`, request, { responseType: 'text' });
   }
+
+
+
+
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+      return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, credentials);
+    }
+
+
+    logout(): void {
+      localStorage.removeItem("token")
+      this.userStateService.clearCurrentUser()
+      console.log("Token removed from localStorage")
+      this.router.navigate(['/login']);
+    }
+
+    isAuthenticated(): boolean {
+        const token = localStorage.getItem("token")
+        console.log("Checking authentication. Token in localStorage:", token)
+      return !!token
+    }
+
+    /**
+     * Sauvegarde les informations de session après connexion
+     * @param loginResponse - La réponse de connexion du backend
+     */
+    saveUserSession(loginResponse: LoginResponse): void {
+      localStorage.setItem("token", loginResponse.token);
+      const userData = {
+        idUser: loginResponse.id,
+        nomUser: loginResponse.nom,
+        prenomUser: loginResponse.prenom,
+        emailUser: loginResponse.email,
+        numeroLigne: loginResponse.numeroLigne,
+        documentContrat: loginResponse.documentContrat,
+        // role: loginResponse.role,
+        photoUser: loginResponse.photoUser,
+        etatCompte: loginResponse.etatCompte
+      };
+      this.userStateService.setCurrentUser(userData);
+    }
+
+    /**
+     * Récupère les informations de l'utilisateur connecté
+     * @returns Les données de l'utilisateur ou null
+     */
+    getCurrentUser(): any {
+      return this.userStateService.getCurrentUser();
+    }
 
 }

@@ -2,6 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { LoginRequest } from '../../../core/models/LoginRequest';
+import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -15,11 +18,16 @@ export class LoginComponent {
 
   loginForm: FormGroup
   showPassword = false
+  isLoading = false
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router, 
+    private gestionUserService: GestionuserService,
+    private notificationService: NotificationService
+  ) {
     this.loginForm = new FormGroup({
-      email: new FormControl("", [Validators.required, Validators.email, this.emailDomainValidator]),
-      password: new FormControl("", [Validators.required, Validators.minLength(6)]),
+      emailUser: new FormControl("", [Validators.required, Validators.email, this.emailDomainValidator]),
+      passwordUser: new FormControl("", [Validators.required, Validators.minLength(6)]),
     })
   }
 
@@ -52,13 +60,43 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      console.log("Login attempt:", this.loginForm.value)
-      // Implement login logic here
+      this.isLoading = true;
+      const credentials: LoginRequest = this.loginForm.value;
+      
+      this.gestionUserService.login(credentials).subscribe({
+        next: (response) => {
+          console.log("Login successful:", response);
+          this.isLoading = false;
+          
+          // Sauvegarder la session utilisateur
+          this.gestionUserService.saveUserSession(response);
+          
+          this.notificationService.showSuccess('Connexion réussie !', 3000);
+          
+          // Rediriger vers le dashboard
+          setTimeout(() => {
+            this.router.navigate(['/client-dashboard']);
+          }, 1000);
+        },
+        error: (error) => {
+          console.error("Login error:", error);
+          this.isLoading = false;
+          
+          let errorMessage = 'Une erreur s\'est produite. Veuillez réessayer.';
+          if (error.status === 401) {
+            errorMessage = 'Email ou mot de passe incorrect.';
+          } else if (error.status === 400) {
+            errorMessage = error.error || 'Données de connexion invalides.';
+          }
+          
+          this.notificationService.showError(errorMessage, 5000);
+        }
+      });
     }
   }
 
   getEmailErrorMessage(): string {
-    const emailControl = this.loginForm.get('email');
+    const emailControl = this.loginForm.get('emailUser');
     if (emailControl?.errors) {
       if (emailControl.errors['required']) {
         return 'L\'email est requis';
