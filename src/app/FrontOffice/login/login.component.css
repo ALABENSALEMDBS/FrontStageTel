@@ -271,6 +271,35 @@
   }
 }
 
+/* Spinner de chargement */
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #00b4db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tt-spinner {
+  border-top-color: #00b4db;
+}
+
+.login-btn.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
 /* Very small screens */
 @media (max-width: 360px) {
   .login-card {
