@@ -78,11 +78,29 @@ export class LoginComponent {
             console.log("🔄 Redirection basée sur le rôle:", response.role);
             if (response.role === 'ROLE_ADMIN') {
               console.log("➡️ Redirection vers adminhome pour ADMIN");
-              this.router.navigate(['/adminhome']);
+              // Créer un nom d'utilisateur pour l'URL (prénom + nom)
+              const userName = `${response.prenom}${response.nom}`;     // au lieu
+              console.log("👤 Nom d'utilisateur pour URL:", userName); // au lieu
+              this.router.navigate(['/adminhome', userName]);
+
             } else if (response.role === 'ROLE_CLIENT') {
               console.log("➡️ Redirection vers client-dashboard pour CLIENT");
-              this.router.navigate(['/client-dashboard']);
-            } else {
+              // Créer un nom d'utilisateur pour l'URL (prénom + nom)
+              const userName = `${response.prenom}${response.nom}`;     // au lieu
+              console.log("👤 Nom d'utilisateur pour URL:", userName); // au lieu
+              this.router.navigate(['/client-dashboard', userName]);  //   au lieu
+              //this.router.navigate(['/client-dashboard']);   // put ca
+
+            } else if (response.role === 'ROLE_AGENT') {
+              console.log("➡️ Redirection vers agenthome pour AGENT");
+              // Créer un nom d'utilisateur pour l'URL (prénom + nom)
+              const userName = `${response.prenom}${response.nom}`;     // au lieu
+              console.log("👤 Nom d'utilisateur pour URL:", userName); // au lieu
+              this.router.navigate(['/agenthome', userName]);  //   au lieu
+              //this.router.navigate(['/client-dashboard']);   // put ca
+            }
+            
+            else {
               console.log("⚠️ Rôle non reconnu, redirection vers home");
               this.router.navigate(['/home']);
             }

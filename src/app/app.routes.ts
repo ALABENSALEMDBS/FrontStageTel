@@ -5,7 +5,8 @@ import { ForgotpasswordComponent } from './FrontOffice/forgotpassword/forgotpass
 import { HomeComponent } from './FrontOffice/HomePage/home/home.component';
 import { LoginComponent } from './FrontOffice/login/login.component';
 import { SignupComponent } from './FrontOffice/signup/signup.component';
-import { adminGuard, clientGuard } from './guards/auth.guard';
+import { adminGuard, agentGuard, clientGuard } from './guards/auth.guard';
+import { AgenthomeComponent } from './BackOffice/agent/agenthome/agenthome.component';
 
 export const routes: Routes = [
 
@@ -17,8 +18,10 @@ export const routes: Routes = [
   {path:'forgot-password',component:ForgotpasswordComponent},
 
   {path:'clientdashboard',component:ClientdashboardComponent, canActivate: [clientGuard]},
-  {path:'client-dashboard',component:ClientdashboardComponent, canActivate: [clientGuard]},
-  {path:'adminhome',component:AdminhomeComponent, canActivate: [adminGuard]},
+  {path:'client-dashboard/:userName',component:ClientdashboardComponent, canActivate: [clientGuard]},
+  {path:'adminhome/:userName',component:AdminhomeComponent, canActivate: [adminGuard]},
+
+  {path:'agenthome/:userName',component:AgenthomeComponent, canActivate: [agentGuard]},
 
 
 ];

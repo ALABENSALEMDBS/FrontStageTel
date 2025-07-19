@@ -1,6 +1,6 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
 import { UserStateService } from '../../services/user-state.service';
 
@@ -13,6 +13,7 @@ import { UserStateService } from '../../services/user-state.service';
 export class ClientdashboardComponent  implements OnInit {
   isDropdownOpen = false
   currentUser: any = null
+  userNameFromUrl: string | null = null
 
   services = [
     {
@@ -59,9 +60,13 @@ export class ClientdashboardComponent  implements OnInit {
     }
   ]
 
-  constructor(private router: Router, private gestionUserService: GestionuserService, private userStateService: UserStateService) {}
+  constructor(private router: Router, private route: ActivatedRoute, private gestionUserService: GestionuserService, private userStateService: UserStateService) {}
 
   ngOnInit(): void {
+    // Récupérer le paramètre userName de l'URL
+    this.userNameFromUrl = this.route.snapshot.params['userName'];
+    console.log("🔗 Nom d'utilisateur depuis URL:", this.userNameFromUrl);
+    
     // Récupérer les données de l'utilisateur connecté
     this.currentUser = this.gestionUserService.getCurrentUser();
     
