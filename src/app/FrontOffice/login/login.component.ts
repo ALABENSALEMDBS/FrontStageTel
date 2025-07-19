@@ -73,9 +73,19 @@ export class LoginComponent {
           
           this.notificationService.showSuccess('Connexion réussie !', 3000);
           
-          // Rediriger vers le dashboard
+          // Rediriger selon le rôle
           setTimeout(() => {
-            this.router.navigate(['/client-dashboard']);
+            console.log("🔄 Redirection basée sur le rôle:", response.role);
+            if (response.role === 'ROLE_ADMIN') {
+              console.log("➡️ Redirection vers adminhome pour ADMIN");
+              this.router.navigate(['/adminhome']);
+            } else if (response.role === 'ROLE_CLIENT') {
+              console.log("➡️ Redirection vers client-dashboard pour CLIENT");
+              this.router.navigate(['/client-dashboard']);
+            } else {
+              console.log("⚠️ Rôle non reconnu, redirection vers home");
+              this.router.navigate(['/home']);
+            }
           }, 1000);
         },
         error: (error) => {
