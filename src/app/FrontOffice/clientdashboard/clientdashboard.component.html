@@ -50,6 +50,10 @@
               <span class="dropdown-icon">👤</span>
               Mon compte
             </button>
+            <button class="dropdown-item" (click)="openChangePasswordModal()">
+              <span class="dropdown-icon">🔑</span>
+              Changer password
+            </button>
             <button class="dropdown-item logout" (click)="logout()">
               <span class="dropdown-icon">🚪</span>
               Déconnexion
@@ -178,4 +182,80 @@
       </div>
     </div>
   </footer>
+</div>
+
+<!-- Modal pour changer le mot de passe -->
+<div class="modal-overlay" [class.show]="isChangePasswordModalOpen" (click)="closeChangePasswordModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Changer le mot de passe</h3>
+      <button class="modal-close" (click)="closeChangePasswordModal()">×</button>
+    </div>
+    
+    <form [formGroup]="changePasswordForm" (ngSubmit)="onChangePassword()" class="modal-form">
+      <div class="form-group">
+        <label for="oldPassword">Ancien mot de passe</label>
+        <div class="password-input-container">
+          <input 
+            id="oldPassword"
+            formControlName="oldPassword"
+            [type]="showOldPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Entrez votre ancien mot de passe"
+            [class.error]="changePasswordForm.get('oldPassword')?.invalid && changePasswordForm.get('oldPassword')?.touched"
+          >
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="toggleOldPasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showOldPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="changePasswordForm.get('oldPassword')?.invalid && changePasswordForm.get('oldPassword')?.touched">
+          L'ancien mot de passe est requis
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="newPassword">Nouveau mot de passe</label>
+        <div class="password-input-container">
+          <input 
+            id="newPassword"
+            formControlName="newPassword"
+            [type]="showNewPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Entrez votre nouveau mot de passe"
+            [class.error]="changePasswordForm.get('newPassword')?.invalid && changePasswordForm.get('newPassword')?.touched"
+          >
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="toggleNewPasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showNewPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="changePasswordForm.get('newPassword')?.invalid && changePasswordForm.get('newPassword')?.touched">
+          Le nouveau mot de passe est requis (minimum 6 caractères)
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="closeChangePasswordModal()">
+          Annuler
+        </button>
+        <button 
+          type="submit" 
+          class="btn-submit" 
+          [disabled]="changePasswordForm.invalid || isChangingPassword"
+        >
+          <span *ngIf="isChangingPassword">🔄 Changement...</span>
+          <span *ngIf="!isChangingPassword">Changer le mot de passe</span>
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
