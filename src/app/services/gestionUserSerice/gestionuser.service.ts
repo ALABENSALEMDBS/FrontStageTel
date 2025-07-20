@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
 import { ForgotPasswordRequest } from '../../../core/models/ForgotPasswordRequest';
 import { LoginRequest } from '../../../core/models/LoginRequest';
 import { LoginResponse } from '../../../core/models/LoginResponse';
@@ -124,6 +125,15 @@ export class GestionuserService {
      */
     getCurrentUser(): any {
       return this.userStateService.getCurrentUser();
+    }
+
+    /**
+     * Changement de mot de passe pour l'utilisateur connecté
+     * @param changePasswordRequest - Contient l'ancien et le nouveau mot de passe
+     * @returns Observable<string> - Message de confirmation
+     */
+    changePassword(changePasswordRequest: ChangePasswordRequest): Observable<string> {
+      return this.http.post(`${this.baseUrl}/change-password`, changePasswordRequest, { responseType: 'text' });
     }
 
 }

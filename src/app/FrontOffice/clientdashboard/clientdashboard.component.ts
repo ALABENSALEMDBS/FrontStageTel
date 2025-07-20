@@ -1,19 +1,29 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
 import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
+import { NotificationService } from '../../services/notification.service';
 import { UserStateService } from '../../services/user-state.service';
 
 @Component({
   selector: 'app-clientdashboard',
-  imports: [NgFor, NgIf],
+  imports: [NgFor, NgIf, ReactiveFormsModule],
   templateUrl: './clientdashboard.component.html',
   styleUrl: './clientdashboard.component.css'
 })
-export class ClientdashboardComponent  implements OnInit {
+export class ClientdashboardComponent  implements OnInit, OnDestroy {
   isDropdownOpen = false
   currentUser: any = null
   userNameFromUrl: string | null = null
+  
+  // Variables pour le modal de changement de mot de passe
+  isChangePasswordModalOpen = false
+  changePasswordForm: FormGroup
+  showOldPassword = false
+  showNewPassword = false
+  isChangingPassword = false
 
   services = [
     {
@@ -60,7 +70,13 @@ export class ClientdashboardComponent  implements OnInit {
     }
   ]
 
-  constructor(private router: Router, private route: ActivatedRoute, private gestionUserService: GestionuserService, private userStateService: UserStateService) {}
+  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private userStateService: UserStateService, private notificationService: NotificationService) {
+    // Initialiser le formulaire de changement de mot de passe
+    this.changePasswordForm = this.fb.group({
+      oldPassword: ['', [Validators.required]],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
 
   ngOnInit(): void {
     // Récupérer le paramètre userName de l'URL
@@ -119,5 +135,79 @@ export class ClientdashboardComponent  implements OnInit {
   // Gestion d'erreur d'image pour avatar par défaut
   onImageError(event: any) {
     event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2Yzc1N2QiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4=';
+  }
+
+  // Méthodes pour le modal de changement de mot de passe
+  openChangePasswordModal() {
+    this.isChangePasswordModalOpen = true;
+    this.changePasswordForm.reset();
+    // Fermer le dropdown si ouvert
+    this.isDropdownOpen = false;
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeChangePasswordModal() {
+    this.isChangePasswordModalOpen = false;
+    this.changePasswordForm.reset();
+    this.showOldPassword = false;
+    this.showNewPassword = false;
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+  }
+
+  toggleOldPasswordVisibility() {
+    this.showOldPassword = !this.showOldPassword;
+  }
+
+  toggleNewPasswordVisibility() {
+    this.showNewPassword = !this.showNewPassword;
+  }
+
+  onChangePassword() {
+    if (this.changePasswordForm.valid && !this.isChangingPassword) {
+      this.isChangingPassword = true;
+      
+      const changePasswordRequest: ChangePasswordRequest = {
+        oldPassword: this.changePasswordForm.get('oldPassword')?.value,
+        newPassword: this.changePasswordForm.get('newPassword')?.value
+      };
+
+      console.log("🔐 Changement de mot de passe en cours...");
+      
+      this.gestionUserService.changePassword(changePasswordRequest).subscribe({
+        next: (response) => {
+          console.log("✅ Mot de passe changé avec succès:", response);
+          this.isChangingPassword = false;
+          
+          // Afficher une notification de succès
+          this.notificationService.showSuccess('Mot de passe changé avec succès !', 4000);
+          
+          // Fermer le modal
+          this.closeChangePasswordModal();
+        },
+        error: (error) => {
+          console.error("❌ Erreur lors du changement de mot de passe:", error);
+          this.isChangingPassword = false;
+          
+          let errorMessage = 'Une erreur s\'est produite lors du changement de mot de passe.';
+          if (error.status === 400) {
+            errorMessage = error.error || 'Ancien mot de passe incorrect.';
+          } else if (error.status === 401) {
+            errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+          }
+          
+          // Afficher une notification d'erreur
+          this.notificationService.showError(errorMessage, 5000);
+        }
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    // S'assurer que le scroll est restauré si le composant est détruit
+    if (this.isChangePasswordModalOpen) {
+      document.body.style.overflow = 'auto';
+    }
   }
 }
