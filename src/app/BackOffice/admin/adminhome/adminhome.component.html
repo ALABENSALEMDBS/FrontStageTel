@@ -1,1 +1,413 @@
-<p>adminhome works!</p>
+<div class="admin-dashboard-container">
+  <!-- Header/Navbar Admin -->
+  <header class="admin-header">
+    <div class="header-content">
+      <!-- Logo section -->
+      <div class="logo-section">
+        <img src="images/tt-logo.png" alt="Tunisie Telecom Admin" class="logo">
+        <span class="admin-badge">ADMIN</span>
+      </div>
+
+      <!-- Mobile menu toggle -->
+      <button class="mobile-menu-toggle" (click)="toggleMobileMenu()" aria-label="Toggle navigation">
+        <span class="hamburger-line" [class.active]="isMobileMenuOpen"></span>
+        <span class="hamburger-line" [class.active]="isMobileMenuOpen"></span>
+        <span class="hamburger-line" [class.active]="isMobileMenuOpen"></span>
+      </button>
+
+      <!-- Navigation admin -->
+      <nav class="admin-nav" [class.mobile-open]="isMobileMenuOpen">
+        <div class="nav-buttons">
+          <button class="nav-button" (click)="navigateToUserManagement(); closeMobileMenu()">
+            <span class="nav-icon">👥</span>
+            Gestion Utilisateurs
+          </button>
+          <button class="nav-button" (click)="navigateToServiceManagement(); closeMobileMenu()">
+            <span class="nav-icon">⚙️</span>
+            Services
+          </button>
+          <button class="nav-button" (click)="navigateToReports(); closeMobileMenu()">
+            <span class="nav-icon">📊</span>
+            Rapports
+          </button>
+          <button class="nav-button" (click)="navigateToSettings(); closeMobileMenu()">
+            <span class="nav-icon">🛠️</span>
+            Paramètres
+          </button>
+        </div>
+
+        <!-- Mobile user menu -->
+        <div class="mobile-user-menu" *ngIf="currentUser">
+          <div class="mobile-user-info">
+            <img 
+              [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNkYzM1NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+              [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+              class="mobile-avatar"
+              (error)="onImageError($event)"
+            >
+            <div class="mobile-user-details">
+              <span class="mobile-name">{{ currentUser.prenomUser + ' ' + currentUser.nomUser }}</span>
+              <span class="mobile-role">Administrateur</span>
+            </div>
+          </div>
+          <div class="mobile-actions">
+            <button class="mobile-action-btn" (click)="navigateToAccount(); closeMobileMenu()">
+              <span class="nav-icon">👤</span>
+              Mon compte
+            </button>
+            <button class="mobile-action-btn" (click)="openChangePasswordModal(); closeMobileMenu()">
+              <span class="nav-icon">🔑</span>
+              Changer mot de passe
+            </button>
+            <button class="mobile-action-btn logout-btn" (click)="logout()">
+              <span class="nav-icon">🚪</span>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- User menu admin (Desktop only) -->
+      <div class="user-section desktop-only">
+        <div class="user-menu" (click)="toggleDropdown()" *ngIf="currentUser">
+          <img 
+            [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNkYzM1NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+            [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+            class="user-avatar admin-avatar"
+            (error)="onImageError($event)"
+          >
+          <span class="user-name">{{ currentUser.prenomUser + ' ' + currentUser.nomUser }}</span>
+          <span class="admin-role">Administrateur</span>
+          <span class="dropdown-arrow" [class.rotated]="isDropdownOpen">▼</span>
+          
+          <div class="dropdown-menu" [class.show]="isDropdownOpen">
+            <div class="dropdown-header">
+              <img 
+                [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNkYzM1NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4='"
+                [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+                class="dropdown-avatar"
+                (error)="onImageError($event)"
+              >
+              <div class="dropdown-user-info">
+                <div class="dropdown-name">{{ currentUser.prenomUser + ' ' + currentUser.nomUser }}</div>
+                <div class="dropdown-email">{{ currentUser.emailUser }}</div>
+                <div class="dropdown-role">Administrateur</div>
+              </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" (click)="navigateToAccount()">
+              <span class="dropdown-icon">👤</span>
+              Mon compte
+            </button>
+            <button class="dropdown-item" (click)="openChangePasswordModal()">
+              <span class="dropdown-icon">🔑</span>
+              Changer mot de passe
+            </button>
+            <button class="dropdown-item logout" (click)="logout()">
+              <span class="dropdown-icon">🚪</span>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Admin -->
+  <main class="admin-main">
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+      <div class="welcome-content">
+        <h1 class="welcome-title">Tableau de bord Administrateur</h1>
+        <p class="welcome-subtitle">Bienvenue {{ currentUser?.prenomUser }}, gérez votre plateforme Tunisie Telecom</p>
+      </div>
+      <div class="admin-stats">
+        <div class="stat-card">
+          <div class="stat-icon admin-stat">👥</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ adminStats.totalUsers }}</div>
+            <div class="stat-label">Utilisateurs</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon admin-stat">✅</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ adminStats.activeUsers }}</div>
+            <div class="stat-label">Actifs</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon admin-stat">⚙️</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ adminStats.totalServices }}</div>
+            <div class="stat-label">Services</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon admin-stat">💰</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ adminStats.monthlyRevenue }}</div>
+            <div class="stat-label">Revenus/mois</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions Section -->
+    <section class="quick-actions-section">
+      <h2 class="section-title">Actions Rapides</h2>
+      <div class="actions-grid">
+        <div class="action-card" (click)="navigateToUserManagement()">
+          <div class="action-icon">👥</div>
+          <h3 class="action-title">Gestion Utilisateurs</h3>
+          <p class="action-description">Créer, modifier et gérer les comptes utilisateurs</p>
+        </div>
+        <div class="action-card" (click)="navigateToServiceManagement()">
+          <div class="action-icon">⚙️</div>
+          <h3 class="action-title">Gestion Services</h3>
+          <p class="action-description">Configurer et maintenir les services</p>
+        </div>
+        <div class="action-card" (click)="navigateToReports()">
+          <div class="action-icon">📊</div>
+          <h3 class="action-title">Rapports</h3>
+          <p class="action-description">Consulter les statistiques et analytics</p>
+        </div>
+        <div class="action-card" (click)="navigateToSettings()">
+          <div class="action-icon">🛠️</div>
+          <h3 class="action-title">Paramètres</h3>
+          <p class="action-description">Configuration système et préférences</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Activities Section -->
+    <section class="activities-section">
+      <h2 class="section-title">Activités Récentes</h2>
+      <div class="activities-list">
+        <div class="activity-item" *ngFor="let activity of recentActivities">
+          <div class="activity-icon">{{ activity.icon }}</div>
+          <div class="activity-info">
+            <div class="activity-message">{{ activity.message }}</div>
+            <div class="activity-time">{{ activity.time }}</div>
+          </div>
+          <div class="activity-type" [class]="activity.type"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- System Status Section -->
+    <section class="status-section">
+      <h2 class="section-title">État du Système</h2>
+      <div class="status-grid">
+        <div class="status-card healthy">
+          <div class="status-indicator"></div>
+          <div class="status-info">
+            <h4>Serveurs Web</h4>
+            <p>Opérationnels</p>
+          </div>
+        </div>
+        <div class="status-card healthy">
+          <div class="status-indicator"></div>
+          <div class="status-info">
+            <h4>Base de Données</h4>
+            <p>Fonctionnelle</p>
+          </div>
+        </div>
+        <div class="status-card warning">
+          <div class="status-indicator"></div>
+          <div class="status-info">
+            <h4>Services SMS</h4>
+            <p>Maintenance</p>
+          </div>
+        </div>
+        <div class="status-card healthy">
+          <div class="status-indicator"></div>
+          <div class="status-info">
+            <h4>API Gateway</h4>
+            <p>Disponible</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Admin -->
+  <footer class="admin-footer">
+    <div class="footer-content">
+      <p>&copy; 2025 Tunisie Telecom - Panneau d'Administration. Tous droits réservés.</p>
+      <div class="footer-info">
+        <span>Version 2.1.0</span>
+        <span>Dernière mise à jour: {{ currentDate }}</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Modal pour changer le mot de passe -->
+<div class="modal-overlay" [class.show]="isChangePasswordModalOpen" (click)="closeChangePasswordModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Changer le mot de passe</h3>
+      <button class="modal-close" (click)="closeChangePasswordModal()">×</button>
+    </div>
+    
+    <form [formGroup]="changePasswordForm" (ngSubmit)="onChangePassword()" class="modal-form">
+      <div class="form-group">
+        <label for="oldPassword">Ancien mot de passe</label>
+        <div class="password-input-container">
+          <input 
+            id="oldPassword"
+            formControlName="oldPassword"
+            [type]="showOldPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Entrez votre ancien mot de passe"
+            [class.error]="changePasswordForm.get('oldPassword')?.invalid && changePasswordForm.get('oldPassword')?.touched"
+          >
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="toggleOldPasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showOldPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="changePasswordForm.get('oldPassword')?.invalid && changePasswordForm.get('oldPassword')?.touched">
+          L'ancien mot de passe est requis
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="newPassword">Nouveau mot de passe</label>
+        <div class="password-input-container">
+          <input 
+            id="newPassword"
+            formControlName="newPassword"
+            [type]="showNewPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Entrez votre nouveau mot de passe"
+            [class.error]="changePasswordForm.get('newPassword')?.invalid && changePasswordForm.get('newPassword')?.touched"
+          >
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="toggleNewPasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showNewPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="changePasswordForm.get('newPassword')?.invalid && changePasswordForm.get('newPassword')?.touched">
+          Le nouveau mot de passe est requis (minimum 6 caractères)
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="closeChangePasswordModal()">
+          Annuler
+        </button>
+        <button 
+          type="submit" 
+          class="btn-submit" 
+          [disabled]="changePasswordForm.invalid || isChangingPassword"
+        >
+          <span *ngIf="isChangingPassword">🔄 Changement...</span>
+          <span *ngIf="!isChangingPassword">Changer le mot de passe</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal pour les informations admin -->
+<div class="modal-overlay" [class.show]="isUserInfoModalOpen" (click)="closeUserInfoModal()">
+  <div class="modal-content user-info-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Mon Compte Administrateur</h3>
+      <button class="modal-close" (click)="closeUserInfoModal()">×</button>
+    </div>
+    
+    <div class="user-info-content">
+      <!-- Photo de profil admin -->
+      <div class="profile-photo-section">
+        <div class="profile-photo-container" (click)="onProfilePhotoClick()" [class.updating]="isUpdatingPhoto">
+          <img 
+            [src]="currentUser?.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjZGMzNTQ1Ii8+CjxzdmcgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4='"
+            [alt]="currentUser?.nomUser + ' ' + currentUser?.prenomUser" 
+            class="profile-photo admin-profile-photo"
+            [class.updating]="isUpdatingPhoto"
+            (error)="onImageError($event)"
+          >
+          
+          <!-- Overlay pour indiquer que la photo est cliquable -->
+          <div class="photo-overlay" [class.show]="!isUpdatingPhoto">
+            <div class="photo-edit-icon">📷</div>
+            <span class="photo-edit-text">Changer la photo</span>
+          </div>
+          
+          <!-- Indicateur de chargement -->
+          <div class="photo-loading" [class.show]="isUpdatingPhoto">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Mise à jour...</span>
+          </div>
+        </div>
+        <h4 class="profile-name">{{ currentUser?.prenomUser }} {{ currentUser?.nomUser }}</h4>
+        <p class="profile-role admin-role-badge">Administrateur</p>
+      </div>
+
+      <!-- Informations personnelles admin -->
+      <div class="info-section">
+        <h5 class="section-title">
+          <span class="section-icon">👤</span>
+          Informations personnelles
+        </h5>
+        <div class="info-grid">
+          <div class="info-item">
+            <label class="info-label">Prénom</label>
+            <span class="info-value">{{ currentUser?.prenomUser || 'Non renseigné' }}</span>
+          </div>
+          <div class="info-item">
+            <label class="info-label">Nom</label>
+            <span class="info-value">{{ currentUser?.nomUser || 'Non renseigné' }}</span>
+          </div>
+          <div class="info-item">
+            <label class="info-label">Email</label>
+            <span class="info-value">{{ currentUser?.emailUser || 'Non renseigné' }}</span>
+          </div>
+          <div class="info-item">
+            <label class="info-label">Rôle</label>
+            <span class="info-value role-badge admin-badge">
+              Administrateur
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations du compte admin -->
+      <div class="info-section">
+        <h5 class="section-title">
+          <span class="section-icon">🆔</span>
+          Informations du compte
+        </h5>
+        <div class="info-grid">
+          <div class="info-item">
+            <label class="info-label">Identifiant Utilisateur</label>
+            <span class="info-value">{{ currentUser?.idUser || 'Non renseigné' }}</span>
+          </div>
+          <div class="info-item">
+            <label class="info-label">État du compte</label>
+            <span class="info-value status-badge actif">
+              Actif
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-primary admin-btn" (click)="closeUserInfoModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
