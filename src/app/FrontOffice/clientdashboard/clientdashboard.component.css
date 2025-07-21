@@ -956,3 +956,461 @@
     width: 100%;
   }
 }
+
+/* User Info Modal Styles */
+.user-info-modal {
+  max-width: 700px;
+  max-height: 85vh;
+}
+
+.user-info-content {
+  padding: 2rem;
+  max-height: calc(85vh - 160px);
+  overflow-y: auto;
+}
+
+.profile-photo-section {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.profile-photo-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.profile-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.profile-photo:hover {
+  transform: scale(1.05);
+}
+
+.profile-name {
+  margin: 1rem 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e3c72;
+}
+
+.profile-role {
+  margin: 0;
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.info-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e3c72;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.section-icon {
+  font-size: 1.2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #212529;
+  padding: 0.5rem 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #1e3c72;
+  font-weight: 500;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem !important;
+  border-radius: 20px !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-align: center;
+  border-left: none !important;
+}
+
+.role-badge.role_client {
+  background: linear-gradient(135deg, #28a745, #34ce57) !important;
+  color: white !important;
+}
+
+.role-badge.role_admin {
+  background: linear-gradient(135deg, #dc3545, #e74c3c) !important;
+  color: white !important;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem !important;
+  border-radius: 20px !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-align: center;
+  border-left: none !important;
+  text-transform: capitalize;
+}
+
+.status-badge.actif,
+.status-badge.active {
+  background: linear-gradient(135deg, #28a745, #34ce57) !important;
+  color: white !important;
+}
+
+.status-badge.inactif,
+.status-badge.inactive {
+  background: linear-gradient(135deg, #dc3545, #e74c3c) !important;
+  color: white !important;
+}
+
+.status-badge.en_attente,
+.status-badge.pending {
+  background: linear-gradient(135deg, #ffc107, #ffcd39) !important;
+  color: #212529 !important;
+}
+
+/* Document Container Styles */
+.document-container {
+  padding: 0 !important;
+  background: transparent !important;
+  border-left: none !important;
+}
+
+.document-image-container,
+.document-pdf-container,
+.document-other-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.document-image-container:hover,
+.document-pdf-container:hover,
+.document-other-container:hover {
+  border-color: #1e3c72;
+  box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+}
+
+.document-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #dee2e6;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.document-image:hover {
+  transform: scale(1.05);
+}
+
+.pdf-icon,
+.file-icon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dc3545, #e74c3c);
+  color: white;
+  border-radius: 8px;
+}
+
+.file-icon {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+.pdf-info,
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pdf-name,
+.file-name {
+  font-weight: 600;
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.pdf-size,
+.file-type {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.view-document-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.view-document-btn:hover {
+  background: linear-gradient(135deg, #2a5298, #1e3c72);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+.no-document {
+  color: #6c757d !important;
+  font-style: italic;
+  background: #f8f9fa !important;
+  border-left: 3px solid #6c757d !important;
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.btn-primary {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+}
+
+/* Responsive Design pour User Info Modal */
+@media (max-width: 768px) {
+  .user-info-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .user-info-content {
+    padding: 1.5rem;
+    max-height: calc(95vh - 140px);
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-photo {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .profile-name {
+    font-size: 1.25rem;
+  }
+  
+  .modal-footer {
+    padding: 1rem 1.5rem;
+  }
+
+  .document-image-container,
+  .document-pdf-container,
+  .document-other-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .pdf-info,
+  .file-info {
+    text-align: center;
+  }
+
+  .view-document-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Styles pour l'upload de photo de profil */
+.profile-photo-container {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.profile-photo-container:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.profile-photo-container.updating {
+  cursor: not-allowed;
+}
+
+.profile-photo-container.updating:hover {
+  transform: none;
+}
+
+/* Overlay pour indiquer que la photo est cliquable */
+.photo-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.photo-overlay.show {
+  opacity: 0;
+}
+
+.profile-photo-container:hover .photo-overlay.show {
+  opacity: 1;
+}
+
+.photo-edit-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.photo-edit-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Indicateur de chargement */
+.photo-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.photo-loading.show {
+  opacity: 1;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 0.5rem;
+}
+
+.loading-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Styles pour les photos en mode mise à jour */
+.profile-photo.updating {
+  filter: grayscale(50%) brightness(70%);
+  transition: filter 0.3s ease;
+}
