@@ -10,6 +10,7 @@ import { ResetPasswordRequest } from '../../../core/models/ResetPasswordRequest'
 import { UserRegistrationRequest } from '../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../core/models/Utilisateur';
 import { UserStateService } from '../user-state.service';
+import { ChangePhoto } from '../../../core/models/ChangePhoto';
 
 @Injectable({
   providedIn: 'root'
@@ -135,5 +136,12 @@ export class GestionuserService {
     changePassword(changePasswordRequest: ChangePasswordRequest): Observable<string> {
       return this.http.post(`${this.baseUrl}/change-password`, changePasswordRequest, { responseType: 'text' });
     }
+
+
+
+    updatePhoto(id: number, changePhoto: ChangePhoto): Observable<ChangePhoto> {
+    return this.http.put<ChangePhoto>(`${this.baseUrl}/update-photo/${id}`, changePhoto);
+  }
+
 
 }
