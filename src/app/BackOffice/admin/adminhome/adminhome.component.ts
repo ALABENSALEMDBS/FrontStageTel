@@ -360,7 +360,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   // Méthodes de navigation admin
   navigateToUserManagement() {
     console.log("Navigation vers gestion utilisateurs");
-    // Implémenter la navigation
+    this.router.navigate(['/admin/user-management']);
   }
 
   navigateToServiceManagement() {

@@ -1,0 +1,315 @@
+<div class="user-management-container">
+  <!-- Header -->
+  <header class="management-header">
+    <div class="header-content">
+      <button class="back-button" (click)="goBack()">
+        <span class="back-icon">←</span>
+        Retour au tableau de bord
+      </button>
+      <h1 class="page-title">Gestion des Utilisateurs</h1>
+      <div class="header-stats">
+        <span class="stat-item">
+          <span class="stat-number">{{ clients.length }}</span>
+          <span class="stat-label">Total clients</span>
+        </span>
+        <span class="stat-item">
+          <span class="stat-number">{{ filteredClients.length }}</span>
+          <span class="stat-label">Affichés</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filtres -->
+  <section class="filters-section">
+    <div class="filters-container">
+      <h2 class="filters-title">
+        <span class="filters-icon">🔍</span>
+        Filtrer les clients
+      </h2>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filter-group">
+          <label for="emailFilter" class="filter-label">Email</label>
+          <input 
+            id="emailFilter"
+            formControlName="emailFilter"
+            type="email"
+            class="filter-input"
+            placeholder="Rechercher par email..."
+          >
+        </div>
+        <div class="filter-group">
+          <label for="numeroLigneFilter" class="filter-label">Numéro de ligne</label>
+          <input 
+            id="numeroLigneFilter"
+            formControlName="numeroLigneFilter"
+            type="number"
+            class="filter-input"
+            placeholder="Rechercher par numéro..."
+          >
+        </div>
+        <div class="filter-actions">
+          <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+            <span class="btn-icon">🔄</span>
+            Réinitialiser
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Liste des clients -->
+  <section class="clients-section">
+    <!-- Loading -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Chargement des clients...</p>
+    </div>
+
+    <!-- Aucun client -->
+    <div class="no-clients" *ngIf="!isLoading && filteredClients.length === 0">
+      <div class="no-clients-icon">👥</div>
+      <h3 class="no-clients-title">Aucun client trouvé</h3>
+      <p class="no-clients-text" *ngIf="clients.length === 0">Aucun client n'est enregistré dans le système.</p>
+      <p class="no-clients-text" *ngIf="clients.length > 0">Aucun client ne correspond aux critères de recherche.</p>
+    </div>
+
+    <!-- Grille des clients -->
+    <div class="clients-grid" *ngIf="!isLoading && filteredClients.length > 0">
+      <div class="client-card" *ngFor="let client of filteredClients" [class.inactive]="client.etatCompte !== 'ACTIF'">
+        <!-- En-tête de la carte -->
+        <div class="card-header">
+          <div class="client-avatar-section">
+            <img 
+              [src]="client.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2Yzc1N2QiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4='"
+              [alt]="client.nomUser + ' ' + client.prenomUser"
+              class="client-avatar"
+              (error)="onImageError($event)"
+            >
+            <div class="status-indicator" [class]="client.etatCompte.toLowerCase()"></div>
+          </div>
+          <div class="client-basic-info">
+            <h3 class="client-name">{{ client.prenomUser }} {{ client.nomUser }}</h3>
+            <p class="client-id">ID: {{ client.idUser }}</p>
+          </div>
+          <div class="status-badge" [class]="client.etatCompte.toLowerCase()">
+            {{ client.etatCompte || 'INACTIF' }}
+          </div>
+        </div>
+
+        <!-- Corps de la carte -->
+        <div class="card-body">
+          <div class="client-details">
+            <div class="detail-item">
+              <span class="detail-icon">📧</span>
+              <div class="detail-info">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">{{ client.emailUser || 'Non renseigné' }}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">📞</span>
+              <div class="detail-info">
+                <span class="detail-label">Numéro de ligne</span>
+                <span class="detail-value">{{ client.numeroLigne || 'Non renseigné' }}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">📅</span>
+              <div class="detail-info">
+                <span class="detail-label">Inscription</span>
+                <span class="detail-value">{{ formatDate(client.createdAt) }}</span>
+              </div>
+            </div>
+            <div class="detail-item" *ngIf="client.documentContrat">
+              <span class="detail-icon">📄</span>
+              <div class="detail-info">
+                <span class="detail-label">Contrat</span>
+                <span class="detail-value">Disponible</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pied de la carte -->
+        <div class="card-footer">
+          <button 
+            class="action-button profile-button" 
+            (click)="viewProfile(client)"
+          >
+            <span class="btn-icon">�</span>
+            <span class="btn-text">Voir profil</span>
+          </button>
+          <button 
+            class="action-button" 
+            [class.activate]="client.etatCompte !== 'ACTIF'"
+            [class.deactivate]="client.etatCompte === 'ACTIF'"
+            (click)="toggleUserStatus(client)"
+          >
+            <span class="btn-icon" *ngIf="client.etatCompte === 'ACTIF'">🔒</span>
+            <span class="btn-icon" *ngIf="client.etatCompte !== 'ACTIF'">🔓</span>
+            <span class="btn-text" *ngIf="client.etatCompte === 'ACTIF'">Désactiver compte</span>
+            <span class="btn-text" *ngIf="client.etatCompte !== 'ACTIF'">Activer compte</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal-overlay" [class.show]="isConfirmModalOpen" (click)="closeConfirmModal()">
+  <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Confirmation</h3>
+      <button class="modal-close" (click)="closeConfirmModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedClient">
+      <div class="confirmation-content">
+        <div class="confirmation-icon" [class]="selectedClient.etatCompte === 'ACTIF' ? 'warning' : 'success'">
+          <span *ngIf="selectedClient.etatCompte === 'ACTIF'">⚠️</span>
+          <span *ngIf="selectedClient.etatCompte !== 'ACTIF'">✅</span>
+        </div>
+        <div class="confirmation-text">
+          <h4 class="confirmation-title">
+            {{ selectedClient.etatCompte === 'ACTIF' ? 'Désactiver le compte' : 'Activer le compte' }}
+          </h4>
+          <p class="confirmation-message">
+            Êtes-vous sûr de vouloir 
+            <strong>{{ selectedClient.etatCompte === 'ACTIF' ? 'désactiver' : 'activer' }}</strong>
+            le compte de <strong>{{ selectedClient.prenomUser }} {{ selectedClient.nomUser }}</strong> ?
+          </p>
+          <div class="user-info-preview">
+            <img 
+              [src]="selectedClient.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2Yzc1N2QiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4='"
+              [alt]="selectedClient.nomUser + ' ' + selectedClient.prenomUser"
+              class="preview-avatar"
+              (error)="onImageError($event)"
+            >
+            <div class="preview-info">
+              <span class="preview-name">{{ selectedClient.prenomUser }} {{ selectedClient.nomUser }}</span>
+              <span class="preview-email">{{ selectedClient.emailUser }}</span>
+              <span class="preview-id">ID: {{ selectedClient.idUser }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeConfirmModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        [class.btn-danger]="selectedClient?.etatCompte === 'ACTIF'"
+        [class.btn-success]="selectedClient?.etatCompte !== 'ACTIF'"
+        (click)="confirmToggleStatus()"
+        [disabled]="isProcessing"
+      >
+        <span *ngIf="isProcessing">🔄 Traitement...</span>
+        <span *ngIf="!isProcessing && selectedClient?.etatCompte === 'ACTIF'">🔒 Désactiver</span>
+        <span *ngIf="!isProcessing && selectedClient?.etatCompte !== 'ACTIF'">🔓 Activer</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de profil -->
+<div class="modal-overlay" [class.show]="isContractModalOpen" (click)="closeContractModal()">
+  <div class="modal-content contract-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Profil du client</h3>
+      <button class="modal-close" (click)="closeContractModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedClientContract">
+      <div class="contract-content">
+        <!-- En-tête client -->
+        <div class="contract-client-header">
+          <img 
+            [src]="selectedClientContract.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2Yzc1N2QiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4='"
+            [alt]="selectedClientContract.nomUser + ' ' + selectedClientContract.prenomUser"
+            class="contract-client-avatar"
+            (error)="onImageError($event)"
+          >
+          <div class="contract-client-info">
+            <h4 class="contract-client-name">{{ selectedClientContract.prenomUser }} {{ selectedClientContract.nomUser }}</h4>
+            <p class="contract-client-id">Client ID: {{ selectedClientContract.idUser }}</p>
+            <span class="contract-client-status" [class]="selectedClientContract.etatCompte.toLowerCase()">
+              {{ selectedClientContract.etatCompte }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Informations du contrat -->
+        <div class="contract-details">
+          <h5 class="contract-section-title">📋 Informations contractuelles</h5>
+          
+          <div class="contract-info-grid">
+            <div class="contract-info-item">
+              <span class="contract-label">Numéro de ligne</span>
+              <span class="contract-value">{{ selectedClientContract.numeroLigne || 'Non attribué' }}</span>
+            </div>
+            <div class="contract-info-item">
+              <span class="contract-label">Email de contact</span>
+              <span class="contract-value">{{ selectedClientContract.emailUser || 'Non renseigné' }}</span>
+            </div>
+            <div class="contract-info-item">
+              <span class="contract-label">Date de souscription</span>
+              <span class="contract-value">{{ formatDate(selectedClientContract.createdAt) }}</span>
+            </div>
+            <div class="contract-info-item">
+              <span class="contract-label">Statut du compte</span>
+              <span class="contract-value status-value" [class]="selectedClientContract.etatCompte.toLowerCase()">
+                {{ selectedClientContract.etatCompte }}
+              </span>
+            </div>
+            <div class="contract-info-item">
+              <span class="contract-label">Type de service</span>
+              <span class="contract-value">Téléphonie fixe</span>
+            </div>
+            <div class="contract-info-item">
+              <span class="contract-label">Plan tarifaire</span>
+              <span class="contract-value">Standard</span>
+            </div>
+          </div>
+
+          <!-- Document de contrat -->
+          <div class="contract-document" *ngIf="selectedClientContract.documentContrat">
+            <h6 class="contract-subsection-title">📄 Document contractuel</h6>
+            <div class="document-info">
+              <div class="document-icon">📄</div>
+              <div class="document-details">
+                <span class="document-name">Contrat_{{ selectedClientContract.prenomUser }}_{{ selectedClientContract.nomUser }}</span>
+                <span class="document-size">Disponible</span>
+              </div>
+              <button class="open-contract-button" (click)="openContract(selectedClientContract)">
+                <span class="open-icon">📄</span>
+                Ouvrir contrat
+              </button>
+            </div>
+          </div>
+
+          <!-- Pas de contrat -->
+          <div class="no-contract" *ngIf="!selectedClientContract.documentContrat">
+            <div class="no-contract-icon">📄</div>
+            <p class="no-contract-text">Aucun document contractuel n'est disponible pour ce client.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeContractModal()">
+        Fermer
+      </button>
+      <button type="button" class="btn btn-primary" *ngIf="selectedClientContract?.documentContrat">
+        <span class="btn-icon">📧</span>
+        Envoyer par email
+      </button>
+    </div>
+  </div>
+</div>

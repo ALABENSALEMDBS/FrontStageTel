@@ -144,4 +144,12 @@ export class GestionuserService {
   }
 
 
+
+  getAllClients(): Observable<Utilisateur[]> {
+    return this.http.get<Utilisateur[]>(`${this.baseUrl}/clients`);
+  }
+
+  toggleStatut(id: number): Observable<Utilisateur> {
+    return this.http.put<Utilisateur>(`${this.baseUrl}/toggle-statut/${id}`, {});
+  }
 }
