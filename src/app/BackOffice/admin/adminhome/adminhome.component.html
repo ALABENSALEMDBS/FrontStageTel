@@ -59,6 +59,10 @@
               <span class="nav-icon">🔑</span>
               Changer mot de passe
             </button>
+            <button class="mobile-action-btn" (click)="openPhotoModal(); closeMobileMenu()">
+              <span class="nav-icon">📷</span>
+              Modifier photo
+            </button>
             <button class="mobile-action-btn logout-btn" (click)="logout()">
               <span class="nav-icon">🚪</span>
               Déconnexion
@@ -102,6 +106,10 @@
             <button class="dropdown-item" (click)="openChangePasswordModal()">
               <span class="dropdown-icon">🔑</span>
               Changer mot de passe
+            </button>
+            <button class="dropdown-item" (click)="openPhotoModal()">
+              <span class="dropdown-icon">📷</span>
+              Modifier photo
             </button>
             <button class="dropdown-item logout" (click)="logout()">
               <span class="dropdown-icon">🚪</span>
@@ -396,8 +404,8 @@
           </div>
           <div class="info-item">
             <label class="info-label">État du compte</label>
-            <span class="info-value status-badge actif">
-              Actif
+            <span class="info-value status-badge" [class]="currentUser?.etatCompte?.toLowerCase()">
+              {{ currentUser?.etatCompte || 'Non renseigné' }}
             </span>
           </div>
         </div>
@@ -411,3 +419,46 @@
     </div>
   </div>
 </div>
+
+
+ <!-- Modal pour modification de photo -->
+  <div class="modal-overlay" [class.show]="isPhotoModalOpen" (click)="closePhotoModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Modifier la photo de profil</h2>
+        <button class="modal-close" (click)="closePhotoModal()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="photo-upload-section">
+          <div class="current-photo" *ngIf="currentUser">
+            <img 
+              [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjMjhhNzQ1Ii8+CjxzdmcgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+              [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+              class="current-photo-img"
+              (error)="onImageError($event)"
+            >
+          </div>
+          
+          <div class="upload-instructions">
+            <h4>Instructions :</h4>
+            <ul>
+              <li>Formats acceptés : JPG, PNG, GIF</li>
+              <li>Taille maximale : 5 MB</li>
+              <li>Dimensions recommandées : 400x400 pixels</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePhotoModal()">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-primary" (click)="onProfilePhotoClick()" [disabled]="isUpdatingPhoto">
+          <span *ngIf="isUpdatingPhoto">🔄 Upload...</span>
+          <span *ngIf="!isUpdatingPhoto">📷 Sélectionner une photo</span>
+        </button>
+      </div>
+    </div>
+  </div>
