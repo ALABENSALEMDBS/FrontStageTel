@@ -1,1 +1,518 @@
-<p>agenthome works!</p>
+<div class="agent-dashboard-container">
+  <!-- Header/Navbar Agent -->
+  <header class="agent-header">
+    <div class="header-content">
+      <!-- Logo section -->
+      <div class="logo-section">
+        <img src="images/tt-logo.png" alt="Tunisie Telecom Agent" class="logo">
+        <span class="agent-badge">AGENT</span>
+      </div>
+
+      <!-- Mobile menu toggle -->
+      <button class="mobile-menu-toggle" (click)="toggleMobileMenu()" aria-label="Toggle navigation">
+        <span class="hamburger-line" [class.active]="isMobileMenuOpen"></span>
+        <span class="hamburger-line" [class.active]="isMobileMenuOpen"></span>
+        <span class="hamburger-line" [class.active]="isMobileMenuOpen"></span>
+      </button>
+
+      <!-- Navigation agent -->
+      <nav class="agent-nav" [class.mobile-open]="isMobileMenuOpen">
+        <div class="nav-buttons">
+          <button class="nav-button" (click)="navigateToReclamations()">
+            <span class="nav-icon">📝</span>
+            Réclamations
+          </button>
+          <button class="nav-button" (click)="navigateToRenseignements()">
+            <span class="nav-icon">💬</span>
+            Renseignements
+          </button>
+          <button class="nav-button" (click)="navigateToReports()">
+            <span class="nav-icon">📊</span>
+            Rapports
+          </button>
+          <button class="nav-button" (click)="navigateToSettings()">
+            <span class="nav-icon">⚙️</span>
+            Paramètres
+          </button>
+        </div>
+
+        <!-- Mobile user menu -->
+        <div class="mobile-user-menu" *ngIf="currentUser">
+          <div class="mobile-user-info">
+            <img 
+              [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMyOGE3NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+              [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+              class="mobile-avatar"
+              (error)="onImageError($event)"
+            >
+            <div class="mobile-user-details">
+              <span class="mobile-name">{{ currentUser.prenomUser + ' ' + currentUser.nomUser }}</span>
+              <span class="mobile-role">Agent Support</span>
+            </div>
+          </div>
+          <div class="mobile-actions">
+            <button class="mobile-action-btn" (click)="navigateToAccount(); closeMobileMenu()">
+              <span class="nav-icon">👤</span>
+              Mon compte
+            </button>
+            <button class="mobile-action-btn" (click)="openChangePasswordModal(); closeMobileMenu()">
+              <span class="nav-icon">🔑</span>
+              Changer mot de passe
+            </button>
+            <button class="mobile-action-btn" (click)="openPhotoModal(); closeMobileMenu()">
+              <span class="nav-icon">📷</span>
+              Modifier photo
+            </button>
+            <button class="mobile-action-btn logout-btn" (click)="logout()">
+              <span class="nav-icon">🚪</span>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- User menu agent (Desktop only) -->
+      <div class="user-section desktop-only">
+        <div class="user-menu" (click)="toggleDropdown()" *ngIf="currentUser">
+          <img 
+            [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMyOGE3NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+            [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+            class="user-avatar agent-avatar"
+            (error)="onImageError($event)"
+          >
+          <span class="user-name">{{ currentUser.prenomUser + ' ' + currentUser.nomUser }}</span>
+          <span class="agent-role">Agent Support</span>
+          <span class="dropdown-arrow" [class.rotated]="isDropdownOpen">▼</span>
+          
+          <div class="dropdown-menu" [class.show]="isDropdownOpen">
+            <div class="dropdown-header">
+              <img 
+                [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMyOGE3NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+                [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+                class="dropdown-avatar"
+                (error)="onImageError($event)"
+              >
+              <div class="dropdown-user-info">
+                <div class="dropdown-name">{{ currentUser.prenomUser + ' ' + currentUser.nomUser }}</div>
+                <div class="dropdown-email">{{ currentUser.emailUser }}</div>
+                <div class="dropdown-role">Agent Support</div>
+              </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" (click)="navigateToAccount()">
+              <span class="dropdown-icon">👤</span>
+              Mon compte
+            </button>
+            <button class="dropdown-item" (click)="openChangePasswordModal()">
+              <span class="dropdown-icon">🔑</span>
+              Changer mot de passe
+            </button>
+            <button class="dropdown-item" (click)="openPhotoModal()">
+              <span class="dropdown-icon">📷</span>
+              Modifier photo
+            </button>
+            <button class="dropdown-item logout" (click)="logout()">
+              <span class="dropdown-icon">🚪</span>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Agent -->
+  <main class="agent-main">
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+      <div class="welcome-content">
+        <h1 class="welcome-title">Tableau de bord Agent Support</h1>
+        <p class="welcome-subtitle">Bienvenue {{ currentUser?.prenomUser }}, gérez les réclamations et renseignements clients</p>
+      </div>
+      <div class="agent-stats">
+        <div class="stat-card reclamations">
+          <div class="stat-icon">📝</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ agentStats.totalReclamations }}</div>
+            <div class="stat-label">Réclamations</div>
+            <div class="stat-detail">{{ agentStats.reclamationsEnCours }} en cours</div>
+          </div>
+        </div>
+        <div class="stat-card renseignements">
+          <div class="stat-icon">💬</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ agentStats.totalRenseignements }}</div>
+            <div class="stat-label">Renseignements</div>
+            <div class="stat-detail">{{ agentStats.renseignementsEnCours }} en cours</div>
+          </div>
+        </div>
+        <div class="stat-card resolution">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <div class="stat-number">{{ agentStats.tauxResolution }}</div>
+            <div class="stat-label">Taux résolution</div>
+            <div class="stat-detail">{{ agentStats.tempsResponseMoyen }} temps moyen</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions Section -->
+    <section class="quick-actions-section">
+      <h2 class="section-title">Actions Rapides</h2>
+      <div class="actions-grid">
+        <div class="action-card" (click)="navigateToReclamations()">
+          <div class="action-icon">📝</div>
+          <h3 class="action-title">Consulter Réclamations</h3>
+          <p class="action-description">Consulter et répondre aux réclamations clients</p>
+          <div class="action-badge">{{ agentStats.reclamationsEnCours }} en attente</div>
+        </div>
+        <div class="action-card" (click)="navigateToRenseignements()">
+          <div class="action-icon">💬</div>
+          <h3 class="action-title">Consulter Renseignements</h3>
+          <p class="action-description">Consulter et répondre aux demandes de renseignements</p>
+          <div class="action-badge">{{ agentStats.renseignementsEnCours }} en attente</div>
+        </div>
+        <div class="action-card" (click)="navigateToReports()">
+          <div class="action-icon">📊</div>
+          <h3 class="action-title">Mes Rapports</h3>
+          <p class="action-description">Consulter les statistiques de performance</p>
+        </div>
+        <div class="action-card" (click)="navigateToSettings()">
+          <div class="action-icon">⚙️</div>
+          <h3 class="action-title">Paramètres</h3>
+          <p class="action-description">Configuration et préférences</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Work Section -->
+    <section class="recent-work-section">
+      <div class="work-grid">
+        <!-- Réclamations récentes -->
+        <div class="work-card">
+          <div class="work-header">
+            <h3 class="work-title">
+              <span class="work-icon">📝</span>
+              Réclamations Récentes
+            </h3>
+            <button class="view-all-btn" (click)="navigateToReclamations()">Voir tout</button>
+          </div>
+          <div class="work-list">
+            <div class="work-item" *ngFor="let reclamation of recentReclamations">
+              <div class="work-item-header">
+                <span class="work-id">{{ reclamation.id }}</span>
+                <span class="work-status" [style.color]="getStatusColor(reclamation.statut)">
+                  {{ reclamation.statut }}
+                </span>
+              </div>
+              <div class="work-client">{{ reclamation.client }}</div>
+              <div class="work-type">{{ reclamation.type }}</div>
+              <div class="work-description">{{ reclamation.description }}</div>
+              <div class="work-footer">
+                <span class="work-date">{{ reclamation.dateCreation }}</span>
+                <span class="work-priority" [style.color]="getPriorityColor(reclamation.priorite)">
+                  {{ reclamation.priorite }}
+                </span>
+              </div>
+              <div class="work-actions">
+                <button class="action-btn view-btn" (click)="viewReclamation(reclamation)">
+                  <span class="btn-icon">👁️</span>
+                  Consulter
+                </button>
+                <button class="action-btn respond-btn" (click)="respondToReclamation(reclamation)">
+                  <span class="btn-icon">💬</span>
+                  Répondre
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Renseignements récents -->
+        <div class="work-card">
+          <div class="work-header">
+            <h3 class="work-title">
+              <span class="work-icon">💬</span>
+              Renseignements Récents
+            </h3>
+            <button class="view-all-btn" (click)="navigateToRenseignements()">Voir tout</button>
+          </div>
+          <div class="work-list">
+            <div class="work-item" *ngFor="let renseignement of recentRenseignements">
+              <div class="work-item-header">
+                <span class="work-id">{{ renseignement.id }}</span>
+                <span class="work-status" [style.color]="getStatusColor(renseignement.statut)">
+                  {{ renseignement.statut }}
+                </span>
+              </div>
+              <div class="work-client">{{ renseignement.client }}</div>
+              <div class="work-type">{{ renseignement.type }}</div>
+              <div class="work-description">{{ renseignement.question }}</div>
+              <div class="work-footer">
+                <span class="work-date">{{ renseignement.dateCreation }}</span>
+              </div>
+              <div class="work-actions">
+                <button class="action-btn view-btn" (click)="viewRenseignement(renseignement)">
+                  <span class="btn-icon">👁️</span>
+                  Consulter
+                </button>
+                <button class="action-btn respond-btn" (click)="respondToRenseignement(renseignement)">
+                  <span class="btn-icon">💬</span>
+                  Répondre
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Agent -->
+  <footer class="agent-footer">
+    <div class="footer-content">
+      <p>&copy; 2025 Tunisie Telecom - Interface Agent Support. Tous droits réservés.</p>
+      <div class="footer-info">
+        <span>Version 2.1.0</span>
+        <span>Dernière mise à jour: {{ currentDate }}</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal pour changement de mot de passe -->
+  <div class="modal-overlay" [class.show]="isChangePasswordModalOpen" (click)="closeChangePasswordModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Changer le mot de passe</h2>
+        <button class="modal-close" (click)="closeChangePasswordModal()">×</button>
+      </div>
+      
+      <form [formGroup]="changePasswordForm" (ngSubmit)="onChangePassword()" class="modal-body">
+        <div class="form-group">
+          <label for="oldPassword">Ancien mot de passe</label>
+          <div class="password-input">
+            <input 
+              id="oldPassword" 
+              formControlName="oldPassword"
+              [type]="showOldPassword ? 'text' : 'password'"
+              placeholder="Entrez votre ancien mot de passe"
+              class="form-control"
+            >
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="toggleOldPasswordVisibility()"
+            >
+              {{ showOldPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="newPassword">Nouveau mot de passe</label>
+          <div class="password-input">
+            <input 
+              id="newPassword" 
+              formControlName="newPassword"
+              [type]="showNewPassword ? 'text' : 'password'"
+              placeholder="Entrez votre nouveau mot de passe"
+              class="form-control"
+            >
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="toggleNewPasswordVisibility()"
+            >
+              {{ showNewPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+          <small class="form-help">Le mot de passe doit contenir au moins 6 caractères</small>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeChangePasswordModal()">
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="changePasswordForm.invalid || isChangingPassword"
+          >
+            <span *ngIf="isChangingPassword">🔄 Modification...</span>
+            <span *ngIf="!isChangingPassword">💾 Modifier</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal pour informations utilisateur -->
+  <div class="modal-overlay" [class.show]="isUserInfoModalOpen" (click)="closeUserInfoModal()">
+    <div class="modal-content user-info-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Mon Compte Agent</h3>
+        <button class="modal-close" (click)="closeUserInfoModal()">×</button>
+      </div>
+      
+      <div class="user-info-content" *ngIf="currentUser">
+        <!-- Photo de profil agent -->
+        <div class="profile-photo-section">
+          <div class="profile-photo-container" (click)="onProfilePhotoClick()" [class.updating]="isUpdatingPhoto">
+            <img 
+              [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjMjhhNzQ1Ii8+CjxzdmcgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+              [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+              class="profile-photo agent-profile-photo"
+              [class.updating]="isUpdatingPhoto"
+              (error)="onImageError($event)"
+            >
+            
+            <!-- Overlay pour indiquer que la photo est cliquable -->
+            <div class="photo-overlay" [class.show]="!isUpdatingPhoto">
+              <div class="photo-edit-icon">📷</div>
+              <span class="photo-edit-text">Changer la photo</span>
+            </div>
+            
+            <!-- Indicateur de chargement -->
+            <div class="photo-loading" [class.show]="isUpdatingPhoto">
+              <div class="loading-spinner"></div>
+              <span class="loading-text">Mise à jour...</span>
+            </div>
+          </div>
+          <h4 class="profile-name">{{ currentUser.prenomUser }} {{ currentUser.nomUser }}</h4>
+          <p class="profile-role agent-role-badge">Agent Support</p>
+        </div>
+
+        <!-- Informations personnelles agent -->
+        <div class="info-section">
+          <h5 class="section-title">
+            <span class="section-icon">👤</span>
+            Informations personnelles
+          </h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <label class="info-label">Prénom</label>
+              <span class="info-value">{{ currentUser.prenomUser || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Nom</label>
+              <span class="info-value">{{ currentUser.nomUser || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Email</label>
+              <span class="info-value">{{ currentUser.emailUser || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-item" *ngIf="currentUser.numeroLigne">
+              <label class="info-label">Téléphone</label>
+              <span class="info-value">{{ currentUser.numeroLigne }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Rôle</label>
+              <span class="info-value role-badge agent-badge">
+                Agent Support
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations du compte agent -->
+        <div class="info-section">
+          <h5 class="section-title">
+            <span class="section-icon">🆔</span>
+            Informations du compte
+          </h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <label class="info-label">Identifiant Agent</label>
+              <span class="info-value">{{ currentUser.idUser || 'Non renseigné' }}</span>
+            </div>
+            <div class="info-item" *ngIf="currentUser.createdAt">
+              <label class="info-label">Membre depuis</label>
+              <span class="info-value">{{ currentUser.createdAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">État du compte</label>
+              <span class="info-value status-badge" [class]="currentUser?.etatCompte?.toLowerCase()">
+              {{ currentUser?.etatCompte || 'Non renseigné' }}
+            </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques de performance agent -->
+        <div class="info-section">
+          <h5 class="section-title">
+            <span class="section-icon">�</span>
+            Statistiques de performance
+          </h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <label class="info-label">Réclamations traitées</label>
+              <span class="info-value performance-stat">{{ agentStats.totalReclamations }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Renseignements fournis</label>
+              <span class="info-value performance-stat">{{ agentStats.totalRenseignements }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Taux de résolution</label>
+              <span class="info-value performance-stat success">{{ agentStats.tauxResolution }}</span>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Temps de réponse moyen</label>
+              <span class="info-value performance-stat">{{ agentStats.tempsResponseMoyen }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-primary agent-btn" (click)="closeUserInfoModal()">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour modification de photo -->
+  <div class="modal-overlay" [class.show]="isPhotoModalOpen" (click)="closePhotoModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Modifier la photo de profil</h2>
+        <button class="modal-close" (click)="closePhotoModal()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="photo-upload-section">
+          <div class="current-photo" *ngIf="currentUser">
+            <img 
+              [src]="currentUser.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjMjhhNzQ1Ii8+CjxzdmcgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3MtNS00LjUtOC00LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'"
+              [alt]="currentUser.nomUser + ' ' + currentUser.prenomUser" 
+              class="current-photo-img"
+              (error)="onImageError($event)"
+            >
+          </div>
+          
+          <div class="upload-instructions">
+            <h4>Instructions :</h4>
+            <ul>
+              <li>Formats acceptés : JPG, PNG, GIF</li>
+              <li>Taille maximale : 5 MB</li>
+              <li>Dimensions recommandées : 400x400 pixels</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePhotoModal()">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-primary" (click)="onProfilePhotoClick()" [disabled]="isUpdatingPhoto">
+          <span *ngIf="isUpdatingPhoto">🔄 Upload...</span>
+          <span *ngIf="!isUpdatingPhoto">📷 Sélectionner une photo</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

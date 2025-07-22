@@ -417,6 +417,27 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     });
   }
 
+
+  closePhotoModal() {
+    this.isPhotoModalOpen = false;
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log("Modal photo fermé pour l'agent");
+  }
+  isPhotoModalOpen=false
+  // Méthodes pour le modal de modification de photo
+  openPhotoModal() {
+    this.isPhotoModalOpen = true;
+    // Fermer le dropdown si ouvert
+    this.isDropdownOpen = false;
+    // Fermer les autres modals s'ils sont ouverts
+    this.isUserInfoModalOpen = false;
+    this.isChangePasswordModalOpen = false;
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+    console.log("Modal photo ouvert pour l'agent");
+  }
+
   // uploadError: string | null = null;
   // uploadResponse: any;
   // uploadFile(file: File): Promise<void> {
