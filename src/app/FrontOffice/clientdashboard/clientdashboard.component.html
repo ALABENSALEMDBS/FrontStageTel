@@ -247,6 +247,32 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+        <div class="password-input-container">
+          <input 
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Confirmez votre nouveau mot de passe"
+            [class.error]="changePasswordForm.get('confirmPassword')?.invalid && changePasswordForm.get('confirmPassword')?.touched"
+          >
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="toggleConfirmPasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="changePasswordForm.get('confirmPassword')?.invalid && changePasswordForm.get('confirmPassword')?.touched">
+          <span *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['required']">La confirmation du mot de passe est requise</span>
+          <span *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['passwordMismatch']">Les mots de passe ne correspondent pas</span>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-cancel" (click)="closeChangePasswordModal()">
           Annuler
@@ -347,7 +373,7 @@
             </span>
           </div>
           <div class="info-item full-width">
-            <label class="info-label">Document de contrat</label>
+            <label class="info-label">carte d'identité</label>
             <div class="info-value document-container" *ngIf="currentUser?.documentContrat; else noDocument">
               <!-- Si c'est une image -->
               <div *ngIf="isImageFile(currentUser.documentContrat)" class="document-image-container">
@@ -368,8 +394,8 @@
               <div *ngIf="isPdfFile(currentUser.documentContrat)" class="document-pdf-container">
                 <div class="pdf-icon">📄</div>
                 <div class="pdf-info">
-                  <span class="pdf-name">Document de contrat.pdf</span>
-                  <span class="pdf-size">Document PDF</span>
+                  <span class="pdf-name">Carte d'identité.pdf</span>
+                  <span class="pdf-size">Carte PDF</span>
                 </div>
                 <button class="view-document-btn" (click)="openDocumentViewer(currentUser.documentContrat, 'pdf')">
                   <span class="btn-icon">📖</span>
@@ -406,7 +432,7 @@
         <div class="info-grid">
           <div class="info-item">
             <label class="info-label">Identifiant Utilisateur</label>
-            <span class="info-value">{{ currentUser?.idUser || 'Non renseigné' }}</span>
+            <span class="info-value">{{ currentUser?.emailUser || 'Non renseigné' }}</span>
           </div>
         </div>
       </div>

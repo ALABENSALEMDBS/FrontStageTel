@@ -310,6 +310,32 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+        <div class="password-input-container">
+          <input 
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Confirmez votre nouveau mot de passe"
+            [class.error]="changePasswordForm.get('confirmPassword')?.invalid && changePasswordForm.get('confirmPassword')?.touched"
+          >
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="toggleConfirmPasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="changePasswordForm.get('confirmPassword')?.invalid && changePasswordForm.get('confirmPassword')?.touched">
+          <span *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['required']">La confirmation du mot de passe est requise</span>
+          <span *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['passwordMismatch']">Les mots de passe ne correspondent pas</span>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-cancel" (click)="closeChangePasswordModal()">
           Annuler
@@ -400,7 +426,7 @@
         <div class="info-grid">
           <div class="info-item">
             <label class="info-label">Identifiant Utilisateur</label>
-            <span class="info-value">{{ currentUser?.idUser || 'Non renseigné' }}</span>
+            <span class="info-value">{{ currentUser?.emailUser || 'Non renseigné' }}</span>
           </div>
           <div class="info-item">
             <label class="info-label">État du compte</label>

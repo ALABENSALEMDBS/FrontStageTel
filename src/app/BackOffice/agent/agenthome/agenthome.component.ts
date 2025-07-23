@@ -1,6 +1,6 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
@@ -26,6 +26,7 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   changePasswordForm: FormGroup;
   showOldPassword = false;
   showNewPassword = false;
+  showConfirmPassword = false;
   isChangingPassword = false;
 
   // Variables pour le modal d'informations utilisateur
@@ -121,8 +122,22 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     // Initialiser le formulaire de changement de mot de passe
     this.changePasswordForm = this.fb.group({
       oldPassword: ['', [Validators.required]],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]]
-    });
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  // Validateur personnalisé pour vérifier que les mots de passe correspondent
+  passwordMatchValidator(form: AbstractControl): ValidationErrors | null {
+    const newPassword = form.get('newPassword');
+    const confirmPassword = form.get('confirmPassword');
+
+    if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+
+    return null;
   }
 
   ngOnInit(): void {
@@ -243,6 +258,10 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
   toggleNewPasswordVisibility() {
     this.showNewPassword = !this.showNewPassword;
+  }
+
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   onChangePassword() {

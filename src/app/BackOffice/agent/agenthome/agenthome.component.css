@@ -757,6 +757,16 @@
   align-items: center;
 }
 
+/* Error Message Styles */
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .form-control {
   width: 100%;
   padding: 0.75rem 3rem 0.75rem 1rem;
