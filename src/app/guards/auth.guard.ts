@@ -88,19 +88,6 @@ export const adminGuard: CanActivateFn = (route, state) => {
   
   // Vérifier si l'utilisateur existe et a le rôle ADMIN
   if (currentUser && currentUser.role === 'ROLE_ADMIN') {
-     // Vérifier le paramètre userName dans l'URL si présent
-    const userNameFromUrl = route.params['userName'];
-    if (userNameFromUrl) {
-      const expectedUserName = `${currentUser.prenomUser}${currentUser.nomUser}`;
-      console.log("🔍 Vérification nom utilisateur - URL:", userNameFromUrl, "Attendu:", expectedUserName);
-      
-      if (userNameFromUrl !== expectedUserName) {
-        console.log("⚠️ Nom d'utilisateur incorrect dans l'URL");
-        // Rediriger vers la bonne URL avec le bon nom
-        router.navigate(['/adminhome', expectedUserName]);
-        return false;
-      }
-    }
     console.log("✅ AdminGuard - Accès autorisé pour le rôle ADMIN");
     return true;
   } else {

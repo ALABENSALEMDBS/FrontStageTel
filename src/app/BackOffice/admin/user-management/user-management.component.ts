@@ -1,7 +1,8 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { UserRegistrationRequest } from '../../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../../core/models/Utilisateur';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -27,6 +28,16 @@ export class UserManagementComponent implements OnInit {
   isContractModalOpen = false;
   selectedClientContract: Utilisateur | null = null;
   
+  // Variables pour le modal de création d'utilisateur
+  isCreateUserModalOpen = false;
+  createUserForm: FormGroup;
+  isCreating = false;
+  
+  // Variables pour le modal des agents
+  isAgentsModalOpen = false;
+  agents: Utilisateur[] = [];
+  isLoadingAgents = false;
+  
   constructor(
     private gestionUserService: GestionuserService,
     private notificationService: NotificationService,
@@ -36,6 +47,14 @@ export class UserManagementComponent implements OnInit {
     this.filterForm = this.fb.group({
       emailFilter: [''],
       numeroLigneFilter: ['']
+    });
+    
+    this.createUserForm = this.fb.group({
+      nomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[a-zA-ZÀ-ÿ\s'-]+$/)]],
+      prenomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[a-zA-ZÀ-ÿ\s'-]+$/)]],
+      emailUser: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      numeroLigne: [0, [Validators.min(0), Validators.max(99999999), Validators.pattern(/^\d{0,8}$/)]],
+      idRole: ['', [Validators.required]]
     });
   }
 
@@ -207,10 +226,18 @@ export class UserManagementComponent implements OnInit {
   }
 
   /**
+   * Actualise la liste des clients
+   */
+  refreshClients(): void {
+    console.log('🔄 Actualisation de la liste des clients...');
+    this.loadClients();
+  }
+
+  /**
    * Retourne à la page d'accueil admin
    */
   goBack(): void {
-    this.router.navigate(['/adminhome',this.gestionUserService.getCurrentUser()?.prenomUser + this.gestionUserService.getCurrentUser()?.nomUser]);
+    this.router.navigate(['/adminhome']);
   }
 
   /**
@@ -226,5 +253,266 @@ export class UserManagementComponent implements OnInit {
   formatDate(date: string | Date): string {
     if (!date) return 'Non renseigné';
     return new Date(date).toLocaleDateString('fr-FR');
+  }
+
+  // ========== MÉTHODES POUR CRÉER UN UTILISATEUR ==========
+
+  /**
+   * Ouvre le modal de création d'utilisateur
+   */
+  openCreateUserModal(): void {
+    this.isCreateUserModalOpen = true;
+    this.createUserForm.reset();
+  }
+
+  /**
+   * Ferme le modal de création d'utilisateur
+   */
+  closeCreateUserModal(): void {
+    this.isCreateUserModalOpen = false;
+    this.resetCreateUserForm();
+    this.isCreating = false;
+  }
+
+  /**
+   * Réinitialise le formulaire de création d'utilisateur
+   */
+  private resetCreateUserForm(): void {
+    this.createUserForm.reset();
+    this.createUserForm.patchValue({
+      nomUser: '',
+      prenomUser: '',
+      emailUser: '',
+      numeroLigne: 0,
+      idRole: ''
+    });
+    
+    // Marquer tous les champs comme non touchés
+    Object.keys(this.createUserForm.controls).forEach(key => {
+      this.createUserForm.get(key)?.markAsUntouched();
+      this.createUserForm.get(key)?.markAsPristine();
+    });
+  }
+
+  /**
+   * Crée un nouveau compte utilisateur
+   */
+  createUser(): void {
+    if (this.createUserForm.invalid) {
+      // Marquer tous les champs comme touchés pour afficher les erreurs
+      this.markFormGroupTouched(this.createUserForm);
+      this.notificationService.showError('Veuillez corriger les erreurs dans le formulaire');
+      return;
+    }
+
+    // Validation supplémentaire pour l'email
+    const emailValue = this.createUserForm.get('emailUser')?.value?.toLowerCase().trim();
+    if (this.isEmailAlreadyUsed(emailValue)) {
+      this.notificationService.showError('Cette adresse email est déjà utilisée');
+      return;
+    }
+
+    // Validation pour le numéro de ligne
+    const numeroLigne = this.createUserForm.get('numeroLigne')?.value;
+    if (numeroLigne && numeroLigne > 0 && this.isPhoneNumberAlreadyUsed(numeroLigne)) {
+      this.notificationService.showError('Ce numéro de ligne est déjà attribué');
+      return;
+    }
+
+    this.isCreating = true;
+    const formData = this.createUserForm.value;
+    
+    // Créer l'objet de requête d'inscription avec nettoyage des données
+    const registrationRequest = new UserRegistrationRequest();
+    registrationRequest.nomUser = formData.nomUser?.trim();
+    registrationRequest.prenomUser = formData.prenomUser?.trim();
+    registrationRequest.emailUser = emailValue;
+    registrationRequest.numeroLigne = numeroLigne || 0;
+    registrationRequest.idRole = parseInt(formData.idRole);
+
+    console.log('🔄 Création d\'un compte utilisateur...', registrationRequest);
+
+    this.gestionUserService.creerCompteByAdmin(registrationRequest).subscribe({
+      next: (response) => {
+        console.log('✅ Compte créé avec succès:', response);
+        let roleText = 'client';
+        if (formData.idRole === '1') {
+          roleText = 'administrateur';
+        } else if (formData.idRole === '2') {
+          roleText = 'agent';
+        }
+        this.notificationService.showSuccess(`Compte ${roleText} créé avec succès pour ${formData.prenomUser} ${formData.nomUser}`);
+        this.closeCreateUserModal();
+        
+        // Recharger la liste appropriée
+        if (formData.idRole === '2') {
+          this.loadAgents(); // Recharger les agents si c'est un agent
+        } else {
+          this.loadClients(); // Recharger les clients pour admin et client
+        }
+        
+        this.isCreating = false;
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la création du compte:', error);
+        let errorMessage = 'Erreur lors de la création du compte';
+        
+        if (error.status === 400) {
+          errorMessage = 'Données invalides. Veuillez vérifier les informations saisies';
+        } else if (error.status === 409) {
+          errorMessage = 'Cette adresse email est déjà utilisée';
+        } else if (error.status === 422) {
+          errorMessage = 'Format des données incorrect';
+        } else if (error.status === 500) {
+          errorMessage = 'Erreur serveur. Veuillez réessayer plus tard';
+        }
+        
+        this.notificationService.showError(errorMessage);
+        this.isCreating = false;
+      }
+    });
+  }
+
+  // ========== MÉTHODES POUR CONSULTER LES AGENTS ==========
+
+  /**
+   * Ouvre le modal des agents
+   */
+  openAgentsModal(): void {
+    this.isAgentsModalOpen = true;
+    this.loadAgents();
+  }
+
+  /**
+   * Ferme le modal des agents
+   */
+  closeAgentsModal(): void {
+    this.isAgentsModalOpen = false;
+  }
+
+  /**
+   * Charge tous les agents
+   */
+  loadAgents(): void {
+    this.isLoadingAgents = true;
+    
+    // Utiliser la méthode spécifique pour récupérer tous les agents
+    this.gestionUserService.getAllAgents().subscribe({
+      next: (agents) => {
+        this.agents = agents;
+        console.log('📋 Agents chargés:', this.agents);
+        this.isLoadingAgents = false;
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors du chargement des agents:', error);
+        this.notificationService.showError('Erreur lors du chargement des agents');
+        this.isLoadingAgents = false;
+      }
+    });
+  }
+
+  /**
+   * Actualise la liste des agents
+   */
+  refreshAgents(): void {
+    this.loadAgents();
+  }
+
+  /**
+   * Active/désactive un agent
+   */
+  toggleAgentStatus(agent: Utilisateur): void {
+    console.log('🔄 Changement de statut pour l\'agent:', agent);
+    
+    this.gestionUserService.toggleStatut(agent.idUser).subscribe({
+      next: (updatedAgent) => {
+        console.log('✅ Statut de l\'agent modifié:', updatedAgent);
+        
+        // Mettre à jour l'agent dans la liste
+        const index = this.agents.findIndex(a => a.idUser === agent.idUser);
+        if (index !== -1) {
+          this.agents[index] = updatedAgent;
+        }
+        
+        const newStatus = updatedAgent.etatCompte === 'ACTIF' ? 'activé' : 'désactivé';
+        this.notificationService.showSuccess(`Agent ${agent.prenomUser} ${agent.nomUser} ${newStatus} avec succès`);
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors du changement de statut:', error);
+        this.notificationService.showError('Erreur lors du changement de statut de l\'agent');
+      }
+    });
+  }
+
+  // ========== MÉTHODES DE VALIDATION ==========
+
+  /**
+   * Marque tous les champs d'un FormGroup comme touchés
+   */
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
+
+  /**
+   * Vérifie si l'email est déjà utilisé
+   */
+  private isEmailAlreadyUsed(email: string): boolean {
+    if (!email) return false;
+    
+    const emailLower = email.toLowerCase().trim();
+    
+    // Vérifier dans la liste des clients
+    const emailExistsInClients = this.clients.some(client => 
+      client.emailUser?.toLowerCase().trim() === emailLower
+    );
+    
+    // Vérifier dans la liste des agents
+    const emailExistsInAgents = this.agents.some(agent => 
+      agent.emailUser?.toLowerCase().trim() === emailLower
+    );
+    
+    return emailExistsInClients || emailExistsInAgents;
+  }
+
+  /**
+   * Vérifie si le numéro de ligne est déjà utilisé
+   */
+  private isPhoneNumberAlreadyUsed(numeroLigne: number): boolean {
+    if (!numeroLigne || numeroLigne <= 0) return false;
+    
+    // Vérifier dans la liste des clients
+    const phoneExistsInClients = this.clients.some(client => 
+      client.numeroLigne === numeroLigne
+    );
+    
+    // Vérifier dans la liste des agents (si les agents ont des numéros de ligne)
+    const phoneExistsInAgents = this.agents.some(agent => 
+      agent.numeroLigne === numeroLigne
+    );
+    
+    return phoneExistsInClients || phoneExistsInAgents;
+  }
+
+  /**
+   * Limite le nombre de chiffres dans un input numérique
+   */
+  limitDigits(event: any, maxDigits: number): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, ''); // Supprimer tout ce qui n'est pas un chiffre
+    
+    if (value.length > maxDigits) {
+      value = value.substring(0, maxDigits);
+    }
+    
+    // Mettre à jour la valeur de l'input et du FormControl
+    input.value = value;
+    this.createUserForm.get('numeroLigne')?.setValue(parseInt(value) || 0);
   }
 }

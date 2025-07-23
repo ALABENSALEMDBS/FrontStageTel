@@ -2,10 +2,20 @@
   <!-- Header -->
   <header class="management-header">
     <div class="header-content">
-      <button class="back-button" (click)="goBack()">
-        <span class="back-icon">←</span>
-        Retour au tableau de bord
-      </button>
+      <div class="header-buttons">
+        <button class="back-button" (click)="goBack()">
+          <span class="back-icon">←</span>
+          Retour au tableau de bord
+        </button>
+        <button class="action-header-button create-user-btn" (click)="openCreateUserModal()">
+          <span class="btn-icon">👤</span>
+          Créer compte utilisateur
+        </button>
+        <button class="action-header-button view-agents-btn" (click)="openAgentsModal()">
+          <span class="btn-icon">👥</span>
+          Consulter les comptes agents
+        </button>
+      </div>
       <h1 class="page-title">Gestion des Utilisateurs</h1>
       <div class="header-stats">
         <span class="stat-item">
@@ -52,6 +62,10 @@
           <button type="button" class="clear-filters-btn" (click)="clearFilters()">
             <span class="btn-icon">🔄</span>
             Réinitialiser
+          </button>
+          <button type="button" class="refresh-clients-btn" (click)="refreshClients()" [disabled]="isLoading">
+            <span class="btn-icon">🔃</span>
+            Actualiser clients
           </button>
         </div>
       </form>
@@ -309,6 +323,233 @@
       <button type="button" class="btn btn-primary" *ngIf="selectedClientContract?.documentContrat">
         <span class="btn-icon">📧</span>
         Envoyer par email
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour créer un utilisateur -->
+<div class="modal-overlay" [class.show]="isCreateUserModalOpen" (click)="closeCreateUserModal()">
+  <div class="modal-content create-user-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Créer un nouveau compte utilisateur</h3>
+      <button class="modal-close" (click)="closeCreateUserModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="createUserForm" class="create-user-form">
+        <div class="form-group">
+          <label for="nomUser">Nom *</label>
+          <input 
+            id="nomUser"
+            formControlName="nomUser"
+            type="text"
+            class="form-control"
+            [class.invalid]="createUserForm.get('nomUser')?.invalid && createUserForm.get('nomUser')?.touched"
+            placeholder="Entrez le nom"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('nomUser')?.invalid && createUserForm.get('nomUser')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['required']">
+              Le nom est requis
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['minlength']">
+              Le nom doit contenir au moins 2 caractères
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['maxlength']">
+              Le nom ne peut pas dépasser 50 caractères
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['pattern']">
+              Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="prenomUser">Prénom *</label>
+          <input 
+            id="prenomUser"
+            formControlName="prenomUser"
+            type="text"
+            class="form-control"
+            [class.invalid]="createUserForm.get('prenomUser')?.invalid && createUserForm.get('prenomUser')?.touched"
+            placeholder="Entrez le prénom"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('prenomUser')?.invalid && createUserForm.get('prenomUser')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['required']">
+              Le prénom est requis
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['minlength']">
+              Le prénom doit contenir au moins 2 caractères
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['maxlength']">
+              Le prénom ne peut pas dépasser 50 caractères
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['pattern']">
+              Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="emailUser">Email *</label>
+          <input 
+            id="emailUser"
+            formControlName="emailUser"
+            type="email"
+            class="form-control"
+            [class.invalid]="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched"
+            placeholder="Entrez l'email"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('emailUser')?.errors?.['required']">
+              L'email est requis
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('emailUser')?.errors?.['email'] || createUserForm.get('emailUser')?.errors?.['pattern']">
+              Veuillez entrer un email valide (ex: exemple&#64;domaine.com)
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="numeroLigne">Numéro de ligne</label>
+          <input 
+            id="numeroLigne"
+            formControlName="numeroLigne"
+            type="number"
+            class="form-control"
+            [class.invalid]="createUserForm.get('numeroLigne')?.invalid && createUserForm.get('numeroLigne')?.touched"
+            placeholder="Entrez le numéro de ligne (optionnel, max 8 chiffres)"
+            min="0"
+            max="99999999"
+            maxlength="8"
+            (input)="limitDigits($event, 8)"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('numeroLigne')?.invalid && createUserForm.get('numeroLigne')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('numeroLigne')?.errors?.['min']">
+              Le numéro de ligne doit être positif
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('numeroLigne')?.errors?.['max']">
+              Le numéro de ligne ne peut pas dépasser 99 999 999 (8 chiffres max)
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('numeroLigne')?.errors?.['pattern']">
+              Le numéro de ligne ne peut contenir que des chiffres (maximum 8)
+            </div>
+          </div>
+          <div class="form-help">
+            <small class="help-text">Maximum 8 chiffres</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="idRole">Type de compte *</label>
+          <select 
+            id="idRole" 
+            formControlName="idRole" 
+            class="form-control"
+            [class.invalid]="createUserForm.get('idRole')?.invalid && createUserForm.get('idRole')?.touched"
+          >
+            <option value="">Sélectionnez un type</option>
+            <option value="1">Administrateur</option>
+            <option value="2">Agent</option>
+            <option value="3">Client</option>
+          </select>
+          <div class="error-messages" *ngIf="createUserForm.get('idRole')?.invalid && createUserForm.get('idRole')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('idRole')?.errors?.['required']">
+              Le type de compte est requis
+            </div>
+          </div>
+          <div class="form-help">
+            <small class="help-text">
+              • <strong>Administrateur</strong> : Accès complet au système<br>
+              • <strong>Agent</strong> : Gestion des clients et support<br>
+              • <strong>Client</strong> : Accès aux services de téléphonie
+            </small>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeCreateUserModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="createUser()"
+        [disabled]="createUserForm.invalid || isCreating"
+      >
+        <span *ngIf="isCreating">🔄 Création...</span>
+        <span *ngIf="!isCreating">✅ Créer le compte</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour consulter les agents -->
+<div class="modal-overlay agents-modal-overlay" [class.show]="isAgentsModalOpen" (click)="closeAgentsModal()">
+  <div class="modal-content agents-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Comptes Agents</h3>
+      <button class="modal-close" (click)="closeAgentsModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Loading agents -->
+      <div class="loading-container" *ngIf="isLoadingAgents">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Chargement des agents...</p>
+      </div>
+
+      <!-- Aucun agent -->
+      <div class="no-agents" *ngIf="!isLoadingAgents && agents.length === 0">
+        <div class="no-agents-icon">👤</div>
+        <h4 class="no-agents-title">Aucun agent trouvé</h4>
+        <p class="no-agents-text">Aucun agent n'est enregistré dans le système.</p>
+      </div>
+
+      <!-- Liste des agents -->
+      <div class="agents-list" *ngIf="!isLoadingAgents && agents.length > 0">
+        <div class="agent-item" *ngFor="let agent of agents">
+          <div class="agent-avatar-section">
+            <img 
+              [src]="agent.photoUser || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2Yzc1N2QiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAxMkM5LjUgMTIgNy41IDEwIDcuNSA3LjVTOS41IDMgMTIgM3MyIDQgNC41IDcuNVM5LjUgMTIgMTIgMTJaTTEyIDEzLjVjLTMgMC04IDEuNS04IDQuNXYyaDEydi0yYzAtM3M1LTQuNS04LTQuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4='"
+              [alt]="agent.nomUser + ' ' + agent.prenomUser"
+              class="agent-avatar"
+              (error)="onImageError($event)"
+            >
+            <div class="agent-status-indicator" [class]="agent.etatCompte.toLowerCase()"></div>
+          </div>
+          <div class="agent-info">
+            <h4 class="agent-name">{{ agent.prenomUser }} {{ agent.nomUser }}</h4>
+            <p class="agent-email">{{ agent.emailUser }}</p>
+            <p class="agent-id">ID: {{ agent.idUser }}</p>
+            <span class="agent-status-badge" [class]="agent.etatCompte.toLowerCase()">
+              {{ agent.etatCompte || 'INACTIF' }}
+            </span>
+          </div>
+          <div class="agent-actions">
+            <button 
+              class="agent-action-btn" 
+              [class.activate]="agent.etatCompte !== 'ACTIF'"
+              [class.deactivate]="agent.etatCompte === 'ACTIF'"
+              (click)="toggleAgentStatus(agent)"
+            >
+              <span *ngIf="agent.etatCompte === 'ACTIF'">🔒</span>
+              <span *ngIf="agent.etatCompte !== 'ACTIF'">🔓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeAgentsModal()">
+        Fermer
+      </button>
+      <button type="button" class="btn btn-primary" (click)="refreshAgents()" [disabled]="isLoadingAgents">
+        <span class="btn-icon">🔄</span>
+        Actualiser
       </button>
     </div>
   </div>

@@ -152,4 +152,13 @@ export class GestionuserService {
   toggleStatut(id: number): Observable<Utilisateur> {
     return this.http.put<Utilisateur>(`${this.baseUrl}/toggle-statut/${id}`, {});
   }
+
+
+   creerCompteByAdmin(registrationRequest: UserRegistrationRequest): Observable<Utilisateur> {
+    return this.http.post<Utilisateur>(`${this.baseUrl}/creercomptebyadmin`, registrationRequest);
+  }
+
+  getAllAgents(): Observable<Utilisateur[]> {
+    return this.http.get<Utilisateur[]>(`${this.baseUrl}/agents`);
+  }
 }
