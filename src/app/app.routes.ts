@@ -20,7 +20,7 @@ export const routes: Routes = [
 
   {path:'clientdashboard',component:ClientdashboardComponent, canActivate: [clientGuard]},
   {path:'client-dashboard/:userName',component:ClientdashboardComponent, canActivate: [clientGuard]},
-  {path:'adminhome/:userName',component:AdminhomeComponent, canActivate: [adminGuard]},
+  {path:'adminhome',component:AdminhomeComponent, canActivate: [adminGuard]},
   {path:'admin/user-management',component:UserManagementComponent, canActivate: [adminGuard]},
 
   {path:'agenthome/:userName',component:AgenthomeComponent, canActivate: [agentGuard]},

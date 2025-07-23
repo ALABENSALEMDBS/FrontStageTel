@@ -78,10 +78,7 @@ export class LoginComponent {
             console.log("🔄 Redirection basée sur le rôle:", response.role);
             if (response.role === 'ROLE_ADMIN') {
               console.log("➡️ Redirection vers adminhome pour ADMIN");
-              // Créer un nom d'utilisateur pour l'URL (prénom + nom)
-              const userName = `${response.prenom}${response.nom}`;     // au lieu
-              console.log("👤 Nom d'utilisateur pour URL:", userName); // au lieu
-              this.router.navigate(['/adminhome', userName]);
+              this.router.navigate(['/adminhome']);
 
             } else if (response.role === 'ROLE_CLIENT') {
               console.log("➡️ Redirection vers client-dashboard pour CLIENT");
