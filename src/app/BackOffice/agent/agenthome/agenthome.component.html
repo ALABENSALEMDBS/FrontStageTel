@@ -330,6 +330,31 @@
           <small class="form-help">Le mot de passe doit contenir au moins 6 caractères</small>
         </div>
 
+        <div class="form-group">
+          <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+          <div class="password-input">
+            <input 
+              id="confirmPassword" 
+              formControlName="confirmPassword"
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              placeholder="Confirmez votre nouveau mot de passe"
+              class="form-control"
+              [class.error]="changePasswordForm.get('confirmPassword')?.invalid && changePasswordForm.get('confirmPassword')?.touched"
+            >
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="toggleConfirmPasswordVisibility()"
+            >
+              {{ showConfirmPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+          <div class="error-message" *ngIf="changePasswordForm.get('confirmPassword')?.invalid && changePasswordForm.get('confirmPassword')?.touched">
+            <span *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['required']">La confirmation du mot de passe est requise</span>
+            <span *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['passwordMismatch']">Les mots de passe ne correspondent pas</span>
+          </div>
+        </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" (click)="closeChangePasswordModal()">
             Annuler
@@ -424,7 +449,7 @@
           <div class="info-grid">
             <div class="info-item">
               <label class="info-label">Identifiant Agent</label>
-              <span class="info-value">{{ currentUser.idUser || 'Non renseigné' }}</span>
+              <span class="info-value">{{ currentUser.emailUser || 'Non renseigné' }}</span>
             </div>
             <div class="info-item" *ngIf="currentUser.createdAt">
               <label class="info-label">Membre depuis</label>

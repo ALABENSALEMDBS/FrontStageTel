@@ -60,6 +60,8 @@
         <div class="error-message" *ngIf="signupForm.get('emailUser')?.invalid && signupForm.get('emailUser')?.touched">
           <span *ngIf="signupForm.get('emailUser')?.errors?.['required']">L'email est requis</span>
           <span *ngIf="signupForm.get('emailUser')?.errors?.['email']">Format d'email invalide</span>
+          <span *ngIf="signupForm.get('emailUser')?.errors?.['noDotInDomain']">Le domaine de l'email doit contenir un point (ex: ala&#64;esprit.tn)</span>
+          <!-- <span *ngIf="signupForm.get('emailUser')?.errors?.['invalidDomainFormat']">Format de domaine invalide</span> -->
         </div>
       </div>
 
@@ -157,7 +159,7 @@
           >
           <label for="documentContrat" class="file-input-label">
             <span class="file-icon">📄</span>
-            <span>{{ selectedContractFile ? selectedContractFile.name : 'Choisir le document de contrat (PDF ou Image)' }}</span>
+            <span>{{ selectedContractFile ? selectedContractFile.name : 'Choisir votre carte d\'identité (PDF ou Image)' }}</span>
           </label>
         </div>
         <!-- Aperçu du document -->

@@ -6,5 +6,7 @@ export class UserRegistrationRequest{
     passwordUser!: string;
     numeroLigne!: number;
     documentContrat!: string;
+    idRole!: number;
+
 
     }
