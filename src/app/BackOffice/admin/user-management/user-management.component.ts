@@ -38,6 +38,11 @@ export class UserManagementComponent implements OnInit {
   agents: Utilisateur[] = [];
   isLoadingAgents = false;
   
+  // Variables pour le modal de suppression
+  isDeleteModalOpen = false;
+  userToDelete: {user: Utilisateur, userType: 'client' | 'agent'} | null = null;
+  isDeleting = false;
+  
   constructor(
     private gestionUserService: GestionuserService,
     private notificationService: NotificationService,
@@ -514,5 +519,87 @@ export class UserManagementComponent implements OnInit {
     // Mettre à jour la valeur de l'input et du FormControl
     input.value = value;
     this.createUserForm.get('numeroLigne')?.setValue(parseInt(value) || 0);
+  }
+
+  // ========== MÉTHODES DE SUPPRESSION ==========
+
+  /**
+   * Ouvre le modal de confirmation pour supprimer un client
+   */
+  confirmDeleteClient(client: Utilisateur): void {
+    this.userToDelete = {
+      user: client,
+      userType: 'client'
+    };
+    this.isDeleteModalOpen = true;
+  }
+
+  /**
+   * Ouvre le modal de confirmation pour supprimer un agent
+   */
+  confirmDeleteAgent(agent: Utilisateur): void {
+    this.userToDelete = {
+      user: agent,
+      userType: 'agent'
+    };
+    this.isDeleteModalOpen = true;
+  }
+
+  /**
+   * Ferme le modal de confirmation de suppression
+   */
+  closeDeleteModal(): void {
+    this.isDeleteModalOpen = false;
+    this.userToDelete = null;
+    this.isDeleting = false;
+  }
+
+  /**
+   * Confirme et exécute la suppression de l'utilisateur
+   */
+  confirmDeleteUser(): void {
+    if (!this.userToDelete || !this.userToDelete.user.idUser) {
+      this.notificationService.showError('Utilisateur non sélectionné');
+      return;
+    }
+
+    this.isDeleting = true;
+    const userToDelete = this.userToDelete.user;
+    const userType = this.userToDelete.userType;
+
+    this.gestionUserService.deleteUser(userToDelete.idUser).subscribe({
+      next: (message) => {
+        console.log('✅ Utilisateur supprimé:', message);
+        
+        // Supprimer l'utilisateur de la liste appropriée
+        if (userType === 'client') {
+          this.clients = this.clients.filter(c => c.idUser !== userToDelete.idUser);
+          this.applyFilters(); // Réappliquer les filtres
+          this.notificationService.showSuccess(`Client ${userToDelete.prenomUser} ${userToDelete.nomUser} supprimé avec succès`);
+        } else {
+          this.agents = this.agents.filter(a => a.idUser !== userToDelete.idUser);
+          this.notificationService.showSuccess(`Agent ${userToDelete.prenomUser} ${userToDelete.nomUser} supprimé avec succès`);
+        }
+        
+        this.closeDeleteModal();
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la suppression:', error);
+        let errorMessage = 'Erreur lors de la suppression';
+        
+        if (error.status === 404) {
+          errorMessage = 'Utilisateur introuvable';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les droits pour supprimer cet utilisateur';
+        } else if (error.status === 409) {
+          errorMessage = 'Impossible de supprimer cet utilisateur car il a des données liées';
+        } else if (error.status === 500) {
+          errorMessage = 'Erreur serveur lors de la suppression';
+        }
+        
+        this.notificationService.showError(errorMessage);
+        this.isDeleting = false;
+      }
+    });
   }
 }

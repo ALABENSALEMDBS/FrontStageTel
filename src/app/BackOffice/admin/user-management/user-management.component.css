@@ -1212,6 +1212,123 @@
   color: #495057;
 }
 
+/* ========== BOUTONS DE SUPPRESSION ========== */
+
+.delete-button {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+  color: white !important;
+  border: 2px solid #dc3545 !important;
+}
+
+.delete-button:hover {
+  background: linear-gradient(135deg, #c82333, #a71e2a) !important;
+  border-color: #a71e2a !important;
+  transform: translateY(-2px);
+}
+
+.delete-agent-btn {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.delete-agent-btn:hover {
+  background: linear-gradient(135deg, #c82333, #a71e2a);
+  transform: translateY(-1px);
+}
+
+/* ========== MODAL DE SUPPRESSION ========== */
+
+.delete-modal {
+  max-width: 600px;
+  width: 90%;
+}
+
+.delete-warning {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.warning-icon {
+  font-size: 3rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.warning-content {
+  flex: 1;
+}
+
+.warning-title {
+  color: #dc3545;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.warning-message {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  color: #495057;
+}
+
+.warning-details {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-details p {
+  margin: 0 0 0.5rem;
+  color: #856404;
+  font-weight: 600;
+}
+
+.warning-details ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.5rem;
+  color: #856404;
+}
+
+.warning-details li {
+  margin-bottom: 0.25rem;
+}
+
+.preview-type {
+  display: inline-block;
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.delete-confirm-btn {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+  border-color: #dc3545 !important;
+  font-weight: 600;
+}
+
+.delete-confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c82333, #a71e2a) !important;
+  border-color: #a71e2a !important;
+}
+
+.delete-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ========== STYLES POUR LE MODAL DES AGENTS ========== */
 
 .agents-modal-overlay {
