@@ -7,6 +7,7 @@ import { ChangePhoto } from '../../../../core/models/ChangePhoto';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
 import { UserStateService } from '../../../services/user-state.service';
+import { Utilisateur } from '../../../../core/models/Utilisateur';
 
 @Component({
   selector: 'app-adminhome',
@@ -15,6 +16,9 @@ import { UserStateService } from '../../../services/user-state.service';
   styleUrl: './adminhome.component.css'
 })
 export class AdminhomeComponent implements OnInit, OnDestroy {
+    agents: Utilisateur[] = [];
+    clients: Utilisateur[] = [];
+
   isDropdownOpen = false;
   currentUser: any = null;
   
@@ -38,12 +42,86 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   // Date actuelle pour l'affichage
   currentDate = new Date().toLocaleDateString('fr-FR');
 
-  // Statistiques admin (exemple)
+ 
+
+  
+  constructor(
+    private router: Router,
+    private fb: FormBuilder,
+    private gestionUserService: GestionuserService,
+    private userStateService: UserStateService,
+    private notificationService: NotificationService
+  ) {
+    // Initialiser le formulaire de changement de mot de passe
+    this.changePasswordForm = this.fb.group({
+      oldPassword: ['', [Validators.required]],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  // Validateur personnalisé pour vérifier que les mots de passe correspondent
+  passwordMatchValidator(form: AbstractControl): ValidationErrors | null {
+    const newPassword = form.get('newPassword');
+    const confirmPassword = form.get('confirmPassword');
+
+    if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+
+    return null;
+  }
+
+  ngOnInit(): void {
+        this.fetchClients();
+        this.fetchAgents();
+    // Récupérer les données de l'utilisateur connecté
+    this.currentUser = this.gestionUserService.getCurrentUser();
+    
+    // S'abonner aux changements d'état de l'utilisateur
+    this.userStateService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+    
+    // Vérifier si l'utilisateur est connecté et a le rôle admin
+    if (!this.gestionUserService.isAuthenticated() || !this.currentUser) {
+      this.router.navigate(['/login']);
+    } else if (this.currentUser.role !== 'ROLE_ADMIN') {
+      this.router.navigate(['/login']);
+    }
+  }
+
+
+
+   /**
+   * Charge tous les clients depuis le service
+   */
+ fetchClients(): void {
+  // appel vers l'API pour récupérer les clients
+  this.gestionUserService.getAllClients().subscribe(data => {
+    this.clients = data;
+   this.adminStats.totalClient = this.clients.length;
+  });
+}
+
+    /**
+   * Charge tous les agents
+   */
+  fetchAgents(): void {
+  // appel vers l'API pour récupérer les agents
+  this.gestionUserService.getAllAgents().subscribe(data => {
+    this.agents = data;
+    this.adminStats.totalAgent = this.agents.length;
+  });
+}
+
+   // Statistiques admin (exemple)
   adminStats = {
-    totalUsers: 1250,
-    activeUsers: 1180,
-    totalServices: 45,
-    monthlyRevenue: '2.5M DT'
+    totalClient: 0,
+    reclamation: 1180,
+    totalAgent: 0,
+    Renseignement: 1180
   };
 
   // Activités récentes (exemple)
@@ -74,50 +152,6 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     }
   ];
 
-  constructor(
-    private router: Router,
-    private fb: FormBuilder,
-    private gestionUserService: GestionuserService,
-    private userStateService: UserStateService,
-    private notificationService: NotificationService
-  ) {
-    // Initialiser le formulaire de changement de mot de passe
-    this.changePasswordForm = this.fb.group({
-      oldPassword: ['', [Validators.required]],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
-  }
-
-  // Validateur personnalisé pour vérifier que les mots de passe correspondent
-  passwordMatchValidator(form: AbstractControl): ValidationErrors | null {
-    const newPassword = form.get('newPassword');
-    const confirmPassword = form.get('confirmPassword');
-
-    if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-
-    return null;
-  }
-
-  ngOnInit(): void {
-    // Récupérer les données de l'utilisateur connecté
-    this.currentUser = this.gestionUserService.getCurrentUser();
-    
-    // S'abonner aux changements d'état de l'utilisateur
-    this.userStateService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
-    
-    // Vérifier si l'utilisateur est connecté et a le rôle admin
-    if (!this.gestionUserService.isAuthenticated() || !this.currentUser) {
-      this.router.navigate(['/login']);
-    } else if (this.currentUser.role !== 'ROLE_ADMIN') {
-      this.router.navigate(['/login']);
-    }
-  }
 
   toggleDropdown() {
     this.isDropdownOpen = !this.isDropdownOpen;

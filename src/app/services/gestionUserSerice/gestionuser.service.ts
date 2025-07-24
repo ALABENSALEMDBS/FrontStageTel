@@ -161,4 +161,9 @@ export class GestionuserService {
   getAllAgents(): Observable<Utilisateur[]> {
     return this.http.get<Utilisateur[]>(`${this.baseUrl}/agents`);
   }
+
+
+  deleteUser(id: number): Observable<string> {
+    return this.http.delete(`${this.baseUrl}/delete/${id}`, { responseType: 'text' });
+  }
 }
