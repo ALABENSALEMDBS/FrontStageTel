@@ -9,7 +9,7 @@
 
       <!-- Navigation buttons in center -->
       <nav class="nav-section">
-        <button class="nav-button" (click)="openReclamation()">
+        <button class="nav-button" (click)="openReclamationModal()">
           <span class="nav-icon">📝</span>
           Réclamation
         </button>
@@ -489,3 +489,229 @@
       </div>
     </div>
   </div>
+
+<!-- Modal pour créer une réclamation -->
+<div class="modal-overlay" [class.show]="isReclamationModalOpen" (click)="closeReclamationModal()">
+  <div class="modal-content reclamation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">📝 Créer une réclamation</h3>
+      <button class="modal-close" (click)="closeReclamationModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="reclamationForm" class="reclamation-form">
+        <!-- Type de réclamation -->
+        <div class="form-group">
+          <label for="typeRecl" class="form-label">
+            <span class="label-icon">🏷️</span>
+            Type de réclamation *
+          </label>
+          <select 
+            id="typeRecl" 
+            formControlName="typeRecl" 
+            class="form-input"
+            [class.error]="reclamationForm.get('typeRecl')?.invalid && reclamationForm.get('typeRecl')?.touched"
+          >
+            <option value="">Sélectionnez un type</option>
+            <option value="Mon_compte_MY_TT">Mon compte MY TT</option>
+            <option value="Mon_Mobile">Mon Mobile</option>
+            <option value="Internet_Mobile">Internet Mobile</option>
+            <option value="Mon_Fixe">Mon Fixe</option>
+            <option value="Service_e_Facture">Service e-Facture</option>
+          </select>
+          <div class="error-message" *ngIf="reclamationForm.get('typeRecl')?.invalid && reclamationForm.get('typeRecl')?.touched">
+            Le type de réclamation est requis
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="descriptionRecl" class="form-label">
+            <span class="label-icon">📝</span>
+            Description du problème *
+          </label>
+          <textarea 
+            id="descriptionRecl"
+            formControlName="descriptionRecl"
+            class="form-textarea"
+            rows="4"
+            placeholder="Décrivez votre problème en détail..."
+            [class.error]="reclamationForm.get('descriptionRecl')?.invalid && reclamationForm.get('descriptionRecl')?.touched"
+          ></textarea>
+          <div class="char-counter">
+            {{ reclamationForm.get('descriptionRecl')?.value?.length || 0 }}/500 caractères
+          </div>
+          <div class="error-message" *ngIf="reclamationForm.get('descriptionRecl')?.invalid && reclamationForm.get('descriptionRecl')?.touched">
+            <span *ngIf="reclamationForm.get('descriptionRecl')?.errors?.['required']">La description est requise</span>
+            <span *ngIf="reclamationForm.get('descriptionRecl')?.errors?.['minlength']">La description doit contenir au moins 10 caractères</span>
+            <span *ngIf="reclamationForm.get('descriptionRecl')?.errors?.['maxlength']">La description ne peut pas dépasser 500 caractères</span>
+          </div>
+        </div>
+
+        <!-- Section des fichiers en ligne -->
+        <div class="files-row">
+          <!-- Capture d'écran -->
+          <div class="form-group file-group">
+            <label class="form-label">
+              <span class="label-icon">📷</span>
+              Capture d'écran (optionnel)
+            </label>
+            <div class="file-upload-container">
+              <input 
+                type="file" 
+                id="captureFileInput" 
+                accept=".png,.jpg,.jpeg" 
+                (change)="onCaptureFileSelected($event)"
+                class="file-input"
+                hidden
+              >
+              <button 
+                type="button" 
+                class="file-upload-btn"
+                (click)="triggerCaptureUpload()"
+                [disabled]="isUploadingCapture"
+              >
+                <span class="upload-icon">📷</span>
+                <span *ngIf="!isUploadingCapture && !selectedCaptureFile">Choisir une image</span>
+                <span *ngIf="isUploadingCapture">🔄 Upload...</span>
+                <span *ngIf="!isUploadingCapture && selectedCaptureFile">Changer l'image</span>
+              </button>
+              <div class="file-info" *ngIf="selectedCaptureFile">
+                <div class="file-details">
+                  <div class="file-name">{{ selectedCaptureFile.name }}</div>
+                  <div class="file-size">({{ formatFileSize(selectedCaptureFile.size) }})</div>
+                </div>
+                <button type="button" class="remove-file-btn" (click)="removeCaptureFile()">❌</button>
+              </div>
+              <div class="upload-hint">
+                <small>Formats acceptés : PNG, JPG, JPEG (max 5MB)</small>
+              </div>
+              
+              <!-- Prévisualisation de l'image en temps réel -->
+              <div class="file-preview" *ngIf="selectedCaptureFile && capturePreviewUrl">
+                <div class="preview-header">
+                  <span class="preview-icon">👁️</span>
+                  <span class="preview-title">Aperçu de l'image</span>
+                </div>
+                <div class="image-preview-container">
+                  <img [src]="capturePreviewUrl" [alt]="selectedCaptureFile.name" class="preview-image">
+                  <div class="image-overlay">
+                    <button type="button" class="zoom-btn" (click)="openImagePreview(capturePreviewUrl, selectedCaptureFile.name)">
+                      🔍 Agrandir
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document -->
+          <div class="form-group file-group">
+            <label class="form-label">
+              <span class="label-icon">📄</span>
+              Document justificatif (optionnel)
+            </label>
+            <div class="file-upload-container">
+              <input 
+                type="file" 
+                id="documentFileInput" 
+                accept=".pdf,.png,.jpg,.jpeg" 
+                (change)="onDocumentFileSelected($event)"
+                class="file-input"
+                hidden
+              >
+              <button 
+                type="button" 
+                class="file-upload-btn"
+                (click)="triggerDocumentUpload()"
+                [disabled]="isUploadingDocument"
+              >
+                <span class="upload-icon">📄</span>
+                <span *ngIf="!isUploadingDocument && !selectedDocumentFile">Choisir un fichier</span>
+                <span *ngIf="isUploadingDocument">🔄 Upload...</span>
+                <span *ngIf="!isUploadingDocument && selectedDocumentFile">Changer le fichier</span>
+              </button>
+              <div class="file-info" *ngIf="selectedDocumentFile">
+                <div class="file-details">
+                  <div class="file-name">{{ selectedDocumentFile.name }}</div>
+                  <div class="file-size">({{ formatFileSize(selectedDocumentFile.size) }})</div>
+                </div>
+                <button type="button" class="remove-file-btn" (click)="removeDocumentFile()">❌</button>
+              </div>
+              <div class="upload-hint">
+                <small>Formats acceptés : PDF, PNG, JPG, JPEG (max 10MB)</small>
+              </div>
+              
+              <!-- Prévisualisation du document en temps réel -->
+              <div class="file-preview" *ngIf="selectedDocumentFile">
+                <div class="preview-header">
+                  <span class="preview-icon">👁️</span>
+                  <span class="preview-title">Aperçu du document</span>
+                </div>
+                
+                <!-- Prévisualisation pour images -->
+                <div class="image-preview-container" *ngIf="isImageFile(selectedDocumentFile.type) && documentPreviewUrl">
+                  <img [src]="documentPreviewUrl" [alt]="selectedDocumentFile.name" class="preview-image">
+                  <div class="image-overlay">
+                    <button type="button" class="zoom-btn" (click)="openImagePreview(documentPreviewUrl, selectedDocumentFile.name)">
+                      🔍 Agrandir
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Prévisualisation pour PDF -->
+                <div class="pdf-preview-container" *ngIf="isPdfFile(selectedDocumentFile.type)">
+                  <div class="pdf-icon-large">📄</div>
+                  <div class="pdf-info">
+                    <div class="pdf-name">{{ selectedDocumentFile.name }}</div>
+                    <div class="pdf-size">{{ formatFileSize(selectedDocumentFile.size) }}</div>
+                    <button type="button" class="view-pdf-btn" (click)="openPdfPreview(selectedDocumentFile)">
+                      📖 Ouvrir le PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations client (automatiques) -->
+        <div class="form-group client-info">
+          <h4 class="info-title">
+            <span class="info-icon">👤</span>
+            Informations du client
+          </h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Nom complet</label>
+              <span>{{ currentUser?.prenomUser }} {{ currentUser?.nomUser }}</span>
+            </div>
+            <div class="info-item">
+              <label>Email</label>
+              <span>{{ currentUser?.emailUser }}</span>
+            </div>
+            <div class="info-item">
+              <label>Numéro de ligne</label>
+              <span>{{ currentUser?.numeroLigne || 'Non renseigné' }}</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeReclamationModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn-submit" 
+        (click)="submitReclamation()"
+        [disabled]="reclamationForm.invalid || isSubmittingReclamation"
+      >
+        <span *ngIf="isSubmittingReclamation">🔄 Envoi...</span>
+        <span *ngIf="!isSubmittingReclamation">📝 Envoyer la réclamation</span>
+      </button>
+    </div>
+  </div>
+</div>
