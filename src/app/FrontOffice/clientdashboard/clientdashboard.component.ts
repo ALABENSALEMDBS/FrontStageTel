@@ -4,6 +4,8 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../core/models/ChangePhoto';
+import { Reclamation, TypeRecl } from '../../../core/models/Reclamation';
+import { GestionreclamationService } from '../../services/gestionReclamationService/gestionreclamation.service';
 import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../services/notification.service';
 import { UserStateService } from '../../services/user-state.service';
@@ -32,6 +34,24 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
   // Variables pour la mise à jour de la photo
   isUpdatingPhoto = false
+
+  // Variables pour le modal de réclamation
+  isReclamationModalOpen = false
+  reclamationForm: FormGroup
+  isSubmittingReclamation = false
+  isUploadingCapture = false
+  isUploadingDocument = false
+  selectedCaptureFile: File | null = null
+  selectedDocumentFile: File | null = null
+  captureRecl: string = ''
+  documentRecl: string = ''
+  
+  // Variables pour les prévisualisations
+  capturePreviewUrl: string | null = null
+  documentPreviewUrl: string | null = null
+
+  // Variables pour la modal photo
+  isPhotoModalOpen = false
 
   services = [
     {
@@ -78,13 +98,19 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     }
   ]
 
-  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private userStateService: UserStateService, private notificationService: NotificationService) {
+  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private gestionReclamationService: GestionreclamationService, private userStateService: UserStateService, private notificationService: NotificationService) {
     // Initialiser le formulaire de changement de mot de passe
     this.changePasswordForm = this.fb.group({
       oldPassword: ['', [Validators.required]],
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
+
+    // Initialiser le formulaire de réclamation
+    this.reclamationForm = this.fb.group({
+      typeRecl: ['', [Validators.required]],
+      descriptionRecl: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
+    });
   }
 
   // Validateur personnalisé pour vérifier que les mots de passe correspondent
@@ -162,16 +188,15 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   }
 
   // Méthodes pour la gestion des documents
-  isImageFile(url: string): boolean {
-    if (!url) return false;
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-    const lowerUrl = url.toLowerCase();
-    return imageExtensions.some(ext => lowerUrl.includes(ext));
+  isImageFile(type: string): boolean {
+    if (!type) return false;
+    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'];
+    return imageTypes.includes(type.toLowerCase());
   }
 
-  isPdfFile(url: string): boolean {
-    if (!url) return false;
-    return url.toLowerCase().includes('.pdf');
+  isPdfFile(type: string): boolean {
+    if (!type) return false;
+    return type.toLowerCase() === 'application/pdf';
   }
 
   getFileName(url: string): string {
@@ -443,7 +468,7 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     document.body.style.overflow = 'auto';
     console.log("Modal photo fermé pour l'agent");
   }
-  isPhotoModalOpen=false
+
   // Méthodes pour le modal de modification de photo
   openPhotoModal() {
     this.isPhotoModalOpen = true;
@@ -475,4 +500,467 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   //         });
   //     });
   // }
+
+  // Méthodes pour la gestion des fichiers dans le modal réclamation
+  onCaptureFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      // Validation du type de fichier (images seulement)
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        this.notificationService.showError('Veuillez sélectionner une image (PNG, JPG, JPEG)', 3000);
+        event.target.value = '';
+        return;
+      }
+      
+      // Validation de la taille (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        this.notificationService.showError('Le fichier est trop volumineux. Taille maximum: 5MB', 3000);
+        event.target.value = '';
+        return;
+      }
+      
+      this.selectedCaptureFile = file;
+      this.isUploadingCapture = false;
+      
+      // Générer la prévisualisation
+      this.generateImagePreview(file, 'capture');
+      
+      console.log('📸 Fichier capture sélectionné:', file.name, 'Taille:', this.formatFileSize(file.size));
+      this.notificationService.showSuccess(`Image sélectionnée: ${file.name}`, 2000);
+    }
+  }
+
+  onDocumentFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      // Validation du type de fichier (PDF et images)
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        this.notificationService.showError('Veuillez sélectionner un PDF ou une image (PNG, JPG, JPEG)', 3000);
+        event.target.value = '';
+        return;
+      }
+      
+      // Validation de la taille (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        this.notificationService.showError('Le fichier est trop volumineux. Taille maximum: 10MB', 3000);
+        event.target.value = '';
+        return;
+      }
+      
+      this.selectedDocumentFile = file;
+      this.isUploadingDocument = false;
+      
+      // Générer la prévisualisation si c'est une image
+      if (this.isImageFile(file.type)) {
+        this.generateImagePreview(file, 'document');
+      }
+      
+      console.log('📄 Document sélectionné:', file.name, 'Type:', file.type, 'Taille:', this.formatFileSize(file.size));
+      this.notificationService.showSuccess(`Document sélectionné: ${file.name}`, 2000);
+    }
+  }
+
+  triggerFileUpload(inputId: string) {
+    const fileInput = document.getElementById(inputId) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  // Méthodes spécifiques pour les uploads
+  triggerCaptureUpload() {
+    this.triggerFileUpload('captureFileInput');
+  }
+
+  triggerDocumentUpload() {
+    this.triggerFileUpload('documentFileInput');
+  }
+
+  // Méthodes pour supprimer les fichiers sélectionnés
+  removeCaptureFile() {
+    this.selectedCaptureFile = null;
+    this.isUploadingCapture = false;
+    
+    // Nettoyer la prévisualisation
+    if (this.capturePreviewUrl) {
+      URL.revokeObjectURL(this.capturePreviewUrl);
+      this.capturePreviewUrl = null;
+    }
+    
+    // Réinitialiser l'input file
+    const fileInput = document.getElementById('captureFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    console.log('Fichier capture supprimé');
+  }
+
+  removeDocumentFile() {
+    this.selectedDocumentFile = null;
+    this.isUploadingDocument = false;
+    
+    // Nettoyer la prévisualisation
+    if (this.documentPreviewUrl) {
+      URL.revokeObjectURL(this.documentPreviewUrl);
+      this.documentPreviewUrl = null;
+    }
+    
+    // Réinitialiser l'input file
+    const fileInput = document.getElementById('documentFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    console.log('Document supprimé');
+  }
+
+  // Méthode pour formater la taille des fichiers
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // Méthode utilitaire pour vérifier l'état des fichiers
+  hasFilesToUpload(): boolean {
+    return !!(this.selectedCaptureFile || this.selectedDocumentFile);
+  }
+
+  // Méthode pour obtenir le nombre de fichiers sélectionnés
+  getSelectedFilesCount(): number {
+    let count = 0;
+    if (this.selectedCaptureFile) count++;
+    if (this.selectedDocumentFile) count++;
+    return count;
+  }
+
+  // Méthode pour soumettre la réclamation
+  submitReclamation() {
+    if (this.reclamationForm.valid) {
+      this.isSubmittingReclamation = true;
+      
+      // Créer l'objet réclamation de base
+      const reclamation = new Reclamation();
+      reclamation.typeRecl = this.reclamationForm.get('typeRecl')?.value as TypeRecl;
+      reclamation.descriptionRecl = this.reclamationForm.get('descriptionRecl')?.value;
+      reclamation.captureRecl = '';
+      reclamation.documentRecl = '';
+
+      // Fonction pour finaliser la soumission
+      const finalizeSubmission = () => {
+        console.log('📋 Soumission de la réclamation:', reclamation);
+        
+        this.gestionReclamationService.ajouterReclamation(reclamation, this.currentUser.idUser).subscribe({
+          next: (response) => {
+            console.log('✅ Réclamation soumise avec succès:', response);
+            this.isSubmittingReclamation = false;
+            
+            // Fermer le modal après soumission
+            this.closeReclamationModal();
+            
+            // Afficher une notification de succès
+            this.notificationService.showSuccess('Réclamation soumise avec succès !', 4000);
+          },
+          error: (error) => {
+            console.error('❌ Erreur lors de la soumission de la réclamation:', error);
+            this.isSubmittingReclamation = false;
+            
+            let errorMessage = 'Une erreur s\'est produite lors de la soumission de la réclamation.';
+            if (error.status === 401) {
+              errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+            } else if (error.status === 403) {
+              errorMessage = 'Vous n\'avez pas les permissions pour créer une réclamation.';
+            }
+            
+            this.notificationService.showError(errorMessage, 5000);
+          }
+        });
+      };
+
+      // Gérer l'upload des fichiers
+      const uploadPromises: Promise<void>[] = [];
+
+      // Upload de la capture d'écran si présente
+      if (this.selectedCaptureFile) {
+        const captureUploadPromise = new Promise<void>((resolve, reject) => {
+          console.log('📸 Upload de la capture d\'écran en cours...');
+          this.gestionUserService.uploadFile(this.selectedCaptureFile!).subscribe({
+            next: (uploadResponse) => {
+              console.log('✅ Capture d\'écran uploadée:', uploadResponse);
+              // Utiliser l'URL retournée par le service
+              reclamation.captureRecl = uploadResponse.url || uploadResponse.filePath || uploadResponse;
+              resolve();
+            },
+            error: (error) => {
+              console.error('❌ Erreur lors de l\'upload de la capture:', error);
+              this.notificationService.showError('Erreur lors de l\'upload de la capture d\'écran', 3000);
+              reject(error);
+            }
+          });
+        });
+        uploadPromises.push(captureUploadPromise);
+      }
+
+      // Upload du document si présent
+      if (this.selectedDocumentFile) {
+        const documentUploadPromise = new Promise<void>((resolve, reject) => {
+          console.log('📄 Upload du document en cours...');
+          this.gestionUserService.uploadFile(this.selectedDocumentFile!).subscribe({
+            next: (uploadResponse) => {
+              console.log('✅ Document uploadé:', uploadResponse);
+              // Utiliser l'URL retournée par le service
+              reclamation.documentRecl = uploadResponse.url || uploadResponse.filePath || uploadResponse;
+              resolve();
+            },
+            error: (error) => {
+              console.error('❌ Erreur lors de l\'upload du document:', error);
+              this.notificationService.showError('Erreur lors de l\'upload du document', 3000);
+              reject(error);
+            }
+          });
+        });
+        uploadPromises.push(documentUploadPromise);
+      }
+
+      // Attendre que tous les uploads soient terminés avant de soumettre
+      if (uploadPromises.length > 0) {
+        Promise.all(uploadPromises)
+          .then(() => {
+            console.log('✅ Tous les fichiers ont été uploadés avec succès');
+            finalizeSubmission();
+          })
+          .catch((error) => {
+            console.error('❌ Erreur lors de l\'upload des fichiers:', error);
+            this.isSubmittingReclamation = false;
+            this.notificationService.showError('Erreur lors de l\'upload des fichiers. Veuillez réessayer.', 5000);
+          });
+      } else {
+        // Pas de fichiers à uploader, soumettre directement
+        finalizeSubmission();
+      }
+    } else {
+      // Marquer tous les champs comme touchés pour afficher les erreurs
+      Object.keys(this.reclamationForm.controls).forEach(key => {
+        this.reclamationForm.get(key)?.markAsTouched();
+      });
+      alert('Veuillez remplir tous les champs obligatoires');
+    }
+  }
+
+  // Méthodes pour gérer le modal réclamation
+  openReclamationModal() {
+    this.isReclamationModalOpen = true;
+    // Réinitialiser le formulaire
+    this.reclamationForm.reset();
+    this.selectedCaptureFile = null;
+    this.selectedDocumentFile = null;
+    this.isUploadingCapture = false;
+    this.isUploadingDocument = false;
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+    console.log("Modal réclamation ouvert");
+  }
+
+  closeReclamationModal() {
+    this.isReclamationModalOpen = false;
+    // Réinitialiser le formulaire et les fichiers
+    this.reclamationForm.reset();
+    this.selectedCaptureFile = null;
+    this.selectedDocumentFile = null;
+    this.isUploadingCapture = false;
+    this.isUploadingDocument = false;
+    
+    // Nettoyer les prévisualisations
+    if (this.capturePreviewUrl) {
+      URL.revokeObjectURL(this.capturePreviewUrl);
+      this.capturePreviewUrl = null;
+    }
+    if (this.documentPreviewUrl) {
+      URL.revokeObjectURL(this.documentPreviewUrl);
+      this.documentPreviewUrl = null;
+    }
+    
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log("Modal réclamation fermé");
+  }
+
+  // Méthodes pour les prévisualisations
+  generateImagePreview(file: File, type: 'capture' | 'document') {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      if (type === 'capture') {
+        this.capturePreviewUrl = e.target.result;
+      } else {
+        this.documentPreviewUrl = e.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  openImagePreview(imageUrl: string, fileName: string) {
+    // Créer un modal pour afficher l'image en grand
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      cursor: pointer;
+      animation: fadeIn 0.3s ease;
+    `;
+    
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.style.cssText = `
+      max-width: 90%;
+      max-height: 80%;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    `;
+    
+    const caption = document.createElement('div');
+    caption.textContent = fileName;
+    caption.style.cssText = `
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      font-size: 2rem;
+      padding: 0.5rem 1rem;
+      border-radius: 50%;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    `;
+    
+    modal.appendChild(closeBtn);
+    modal.appendChild(img);
+    modal.appendChild(caption);
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+    
+    // Fermer le modal en cliquant dessus ou sur le bouton
+    const closeModal = () => {
+      document.body.removeChild(modal);
+      document.body.style.overflow = 'auto';
+    };
+    
+    modal.addEventListener('click', closeModal);
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeModal();
+    });
+  }
+
+  openPdfPreview(file: File) {
+    // Créer une URL pour le fichier PDF
+    const pdfUrl = URL.createObjectURL(file);
+    
+    // Ouvrir dans un nouvel onglet
+    const newWindow = window.open(pdfUrl, '_blank');
+    if (!newWindow) {
+      // Si le popup est bloqué, afficher un message
+      this.notificationService.showError('Veuillez autoriser les popups pour prévisualiser le PDF', 3000);
+      
+      // Alternative: créer un modal avec iframe
+      this.createPdfModal(pdfUrl, file.name);
+    }
+  }
+
+  private createPdfModal(pdfUrl: string, fileName: string) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease;
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      backdrop-filter: blur(10px);
+    `;
+    
+    const title = document.createElement('h3');
+    title.textContent = fileName;
+    title.style.cssText = `
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = `
+      background: none;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      font-size: 1.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    `;
+    
+    const iframe = document.createElement('iframe');
+    iframe.src = pdfUrl;
+    iframe.style.cssText = `
+      width: 100%;
+      height: calc(100% - 80px);
+      border: none;
+      background: white;
+    `;
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    modal.appendChild(header);
+    modal.appendChild(iframe);
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+    
+    closeBtn.addEventListener('click', () => {
+      document.body.removeChild(modal);
+      document.body.style.overflow = 'auto';
+      URL.revokeObjectURL(pdfUrl);
+    });
+  }
 }
