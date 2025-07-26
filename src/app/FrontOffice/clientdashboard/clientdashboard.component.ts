@@ -51,9 +51,6 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   capturePreviewUrl: string | null = null
   documentPreviewUrl: string | null = null
 
-  // Variable pour stocker le logo en base64
-  private logoBase64: string = ''
-
   // Variables pour la modal photo
   isPhotoModalOpen = false
 
@@ -164,9 +161,6 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     this.userNameFromUrl = this.route.snapshot.params['userName'];
     console.log("🔗 Nom d'utilisateur depuis URL:", this.userNameFromUrl);
     
-    // Précharger le logo en base64
-    this.preloadLogo();
-    
     // Récupérer les données de l'utilisateur connecté
     this.currentUser = this.gestionUserService.getCurrentUser();
     
@@ -186,33 +180,6 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       // Charger le nombre de réclamations immédiatement si l'utilisateur est déjà disponible
       this.loadReclamationsCount();
     }
-  }
-
-  // Méthode pour précharger le logo en base64
-  private preloadLogo(): void {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          this.logoBase64 = canvas.toDataURL('image/png');
-          console.log('✅ Logo préchargé en base64');
-        }
-      } catch (error) {
-        console.log('❌ Erreur lors du préchargement du logo:', error);
-      }
-    };
-    
-    img.onerror = () => {
-      console.log('❌ Impossible de charger le logo depuis images/tt-logo.png');
-    };
-    
-    img.src = 'images/tt-logo.png';
   }
 
   toggleDropdown() {
@@ -1165,164 +1132,35 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       // Créer un nouveau document PDF
       const doc = new jsPDF();
       
-      // ==================== HEADER AVEC FOND ROUGE ====================
-      // Arrière-plan rouge pour le header
-      doc.setFillColor(226, 36, 36); // Rouge Tunisie Telecom
-      doc.rect(0, 0, 210, 40, 'F');
+      // Configuration des couleurs et polices
+      const primaryColor = '#e02424'; // Rouge Tunisie Telecom
+      const secondaryColor = '#374151';
+      const textColor = '#1f2937';
       
-      // Titre principal avec texte blanc
-      doc.setTextColor(255, 255, 255); // Texte blanc
-      doc.setFontSize(20);
-      doc.setFont('times', 'bold');
-      doc.text('TUNISIE TELECOM', 20, 20);
+      // Logo Tunisie Telecom en base64 (version simplifiée pour le PDF)
+      const logoBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAWdEVYdENyZWF0aW9uIFRpbWUAMDEvMjcvMjQJLWFYAAAAWElEQVR4nO3RAQ0AAAjDsNE/tBn9wgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwA1ESAAEN/uhYAAAAAElFTkSuQmCC';
       
-      // Sous-titre en blanc
-      doc.setFontSize(14);
-      doc.setFont('times', 'normal');
-      doc.text('Récépissé de Réclamation', 20, 30);
+      // Header avec logo et titre
+      doc.setFillColor(226, 36, 36); // Rouge TT
+      doc.rect(0, 0, 210, 30, 'F');
       
-      // Ajouter le logo TT de manière synchrone
-      this.addLogoToHeader(doc);
-      
-      let yPosition = 55;
-      
-      // Ligne de séparation sous le header rouge
-      doc.setDrawColor(226, 36, 36);
-      doc.setLineWidth(0.5);
-      doc.line(20, 45, 190, 45);
-      
-      // ==================== ID RÉCLAMATION ====================
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(16);
-      doc.setFont('times', 'bold');
-      doc.text(`Réclamation N° ${reclamation.idRecl}`, 20, yPosition);
-      yPosition += 15;
-      
-      // Date de génération
-      const currentDate = new Date().toLocaleDateString('fr-FR');
-      const currentTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.text(`Généré le: ${currentDate} à ${currentTime}`, 20, yPosition);
-      yPosition += 20;
-      
-      // ==================== INFORMATIONS CLIENT ====================
-      doc.setFontSize(14);
-      doc.setFont('times', 'bold');
-      doc.text('INFORMATIONS CLIENT', 20, yPosition);
-      yPosition += 10;
-      
-      doc.setFontSize(11);
-      doc.setFont('times', 'normal');
-      
-      if (this.currentUser) {
-        doc.text(`Nom complet: ${this.currentUser.prenomUser} ${this.currentUser.nomUser}`, 25, yPosition);
-        yPosition += 8;
-        doc.text(`Email: ${this.currentUser.emailUser}`, 25, yPosition);
-        yPosition += 8;
-        if (this.currentUser.numeroLigne) {
-          doc.text(`Numéro de ligne: ${this.currentUser.numeroLigne}`, 25, yPosition);
-          yPosition += 8;
-        }
+      // Ajouter le logo (si possible) - position top-left dans le header rouge
+      try {
+        // Charger et afficher le logo depuis le dossier public
+        const img = new Image();
+        img.onload = () => {
+          // Une fois l'image chargée, on peut continuer avec le PDF
+          this.generatePdfWithLogo(doc, reclamation, img);
+        };
+        img.onerror = () => {
+          // Si le logo ne peut pas être chargé, continuer sans
+          this.generatePdfWithoutLogo(doc, reclamation);
+        };
+        img.src = 'images/tt-logo.png';
+      } catch (error) {
+        // En cas d'erreur, continuer sans logo
+        this.generatePdfWithoutLogo(doc, reclamation);
       }
-      yPosition += 10;
-      
-      // ==================== DÉTAILS RÉCLAMATION ====================
-      doc.setFontSize(14);
-      doc.setFont('times', 'bold');
-      doc.text('DÉTAILS DE LA RÉCLAMATION', 20, yPosition);
-      yPosition += 10;
-      
-      doc.setFontSize(11);
-      doc.setFont('times', 'normal');
-      
-      // Type
-      doc.text(`Type: ${this.getTypeReclLabel(reclamation.typeRecl)}`, 25, yPosition);
-      yPosition += 8;
-      
-      // État
-      doc.text(`État: ${this.getEtatReclLabel(reclamation.etatRecl)}`, 25, yPosition);
-      yPosition += 8;
-      
-      // Date de création
-      doc.text(`Date de création: ${this.formatDate(reclamation.dateRecl)}`, 25, yPosition);
-      yPosition += 8;
-      
-      // Date de réponse si disponible
-      if (reclamation.dateReponRecl) {
-        doc.text(`Date de réponse: ${this.formatDate(reclamation.dateReponRecl)}`, 25, yPosition);
-        yPosition += 8;
-      }
-      yPosition += 10;
-      
-      // ==================== DESCRIPTION ====================
-      doc.setFontSize(14);
-      doc.setFont('times', 'bold');
-      doc.text('DESCRIPTION DU PROBLÈME', 20, yPosition);
-      yPosition += 10;
-      
-      doc.setFontSize(11);
-      doc.setFont('times', 'normal');
-      const descriptionLines = doc.splitTextToSize(reclamation.descriptionRecl, 170);
-      doc.text(descriptionLines, 25, yPosition);
-      yPosition += descriptionLines.length * 6 + 15;
-      
-      // ==================== RÉPONSE SI DISPONIBLE ====================
-      if (reclamation.descriptionReponRecl) {
-        doc.setFontSize(14);
-        doc.setFont('times', 'bold');
-        doc.text('RÉPONSE OFFICIELLE', 20, yPosition);
-        yPosition += 10;
-        
-        doc.setFontSize(11);
-        doc.setFont('times', 'normal');
-        const responseLines = doc.splitTextToSize(reclamation.descriptionReponRecl, 170);
-        doc.text(responseLines, 25, yPosition);
-        yPosition += responseLines.length * 6 + 15;
-      }
-      
-      // ==================== FICHIERS JOINTS ====================
-      // if (reclamation.captureRecl || reclamation.documentRecl) {
-      //   doc.setFontSize(14);
-      //   doc.setFont('times', 'bold');
-      //   doc.text('FICHIERS JOINTS', 20, yPosition);
-      //   yPosition += 10;
-        
-      //   doc.setFontSize(11);
-      //   doc.setFont('times', 'normal');
-        
-      //   if (reclamation.captureRecl) {
-      //     doc.text('- Capture d\'écran incluse', 25, yPosition);
-      //     yPosition += 8;
-      //   }
-      //   if (reclamation.documentRecl) {
-      //     doc.text('- Document justificatif inclus', 25, yPosition);
-      //     yPosition += 8;
-      //   }
-      //   yPosition += 10;
-      // }
-      
-      // ==================== FOOTER SIMPLE ====================
-      const pageHeight = doc.internal.pageSize.height;
-      
-      // Ligne de séparation
-      doc.setDrawColor(226, 36, 36);
-      doc.setLineWidth(0.5);
-      doc.line(20, pageHeight - 30, 190, pageHeight - 30);
-      
-      // Informations de génération
-      doc.setFontSize(9);
-      doc.setTextColor(100, 100, 100);
-      doc.setFont('times', 'normal');
-      doc.text('Ce document est généré automatiquement par le système Tunisie Telecom.', 20, pageHeight - 20);
-      doc.text(`Réclamation #${reclamation.idRecl} | ${currentDate} | ${currentTime}`, 20, pageHeight - 12);
-      
-      // Télécharger le PDF
-      const fileName = `Reclamation_TT_${reclamation.idRecl}_${currentDate.replace(/\//g, '-')}.pdf`;
-      doc.save(fileName);
-      
-      // Afficher une notification de succès
-      this.notificationService.showSuccess('PDF téléchargé avec succès!');
       
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
@@ -1330,51 +1168,195 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     }
   }
 
-  // Méthode pour ajouter le logo TT au header du PDF
-  private addLogoToHeader(doc: jsPDF): void {
+  // Méthode pour générer le PDF avec logo
+  private generatePdfWithLogo(doc: jsPDF, reclamation: any, logoImg: HTMLImageElement): void {
     try {
-      if (this.logoBase64) {
-        // Utiliser le logo préchargé en base64
-        doc.addImage(this.logoBase64, 'PNG', 168, 6, 29, 29);
-        console.log('✅ Logo Tunisie Telecom (base64) ajouté au header du PDF');
-      } else {
-        // Fallback si le logo n'est pas chargé
-        this.addFallbackLogo(doc);
+      // Convertir l'image en canvas pour l'ajouter au PDF
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        canvas.width = logoImg.width;
+        canvas.height = logoImg.height;
+        ctx.drawImage(logoImg, 0, 0);
+        
+        const logoDataUrl = canvas.toDataURL('image/png');
+        
+        // Ajouter le logo au PDF (position dans le header rouge)
+        doc.addImage(logoDataUrl, 'PNG', 165, 5, 20, 20);
       }
+      
+      // Continuer avec le reste du PDF
+      this.generatePdfContent(doc, reclamation);
+      
     } catch (error) {
-      console.log('❌ Erreur lors de l\'ajout du logo:', error);
-      this.addFallbackLogo(doc);
+      console.error('Erreur lors de l\'ajout du logo:', error);
+      // En cas d'erreur, continuer sans logo
+      this.generatePdfWithoutLogo(doc, reclamation);
     }
   }
 
-  // Méthode de fallback pour ajouter un logo simple en cas d'erreur
-  private addFallbackLogo(doc: jsPDF): void {
+  // Méthode pour générer le PDF sans logo
+  private generatePdfWithoutLogo(doc: jsPDF, reclamation: any): void {
+    this.generatePdfContent(doc, reclamation);
+  }
+
+  // Méthode pour générer le contenu principal du PDF
+  private generatePdfContent(doc: jsPDF, reclamation: any): void {
     try {
-      // Logo de secours - fond blanc avec texte et bordure rouge
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(168, 6, 29, 29, 3, 3, 'F');
+      const primaryColor = '#e02424';
+      const secondaryColor = '#374151';
+      const textColor = '#1f2937';
       
-      // Bordure rouge épaisse
+      // Titre principal
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TUNISIE TELECOM', 20, 15);
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Récépissé de Réclamation', 20, 23);
+      
+      // Date de génération
+      const currentDate = new Date().toLocaleDateString('fr-FR');
+      doc.setFontSize(10);
+      doc.text(`Généré le: ${currentDate}`, 120, 23);
+      
+      // Réinitialiser la couleur du texte
+      doc.setTextColor(textColor);
+      
+      // Informations de la réclamation
+      let yPosition = 50;
+      
+      // ID de réclamation
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Réclamation #${reclamation.idRecl}`, 20, yPosition);
+      yPosition += 15;
+      
+      // Ligne de séparation
       doc.setDrawColor(226, 36, 36);
-      doc.setLineWidth(2);
-      doc.roundedRect(168, 6, 29, 29, 3, 3, 'S');
+      doc.setLineWidth(0.5);
+      doc.line(20, yPosition, 190, yPosition);
+      yPosition += 15;
       
-      // Texte "TUNISIE TELECOM" en rouge
-      doc.setTextColor(226, 36, 36);
-      doc.setFontSize(7);
-      doc.setFont('times', 'bold');
-      doc.text('TUNISIE', 174, 16);
-      doc.text('TELECOM', 172, 25);
+      // Informations du client
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(secondaryColor);
+      doc.text('INFORMATIONS CLIENT', 20, yPosition);
+      yPosition += 10;
       
-      // Petite ligne décorative
-      doc.setLineWidth(1);
-      doc.line(173, 18, 191, 18);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(textColor);
       
-      console.log('✅ Logo de fallback ajouté au header du PDF');
+      if (this.currentUser) {
+        doc.text(`Nom: ${this.currentUser.prenomUser} ${this.currentUser.nomUser}`, 20, yPosition);
+        yPosition += 8;
+        doc.text(`Email: ${this.currentUser.emailUser}`, 20, yPosition);
+        yPosition += 8;
+        if (this.currentUser.numeroLigne) {
+          doc.text(`Numéro de ligne: ${this.currentUser.numeroLigne}`, 20, yPosition);
+          yPosition += 8;
+        }
+      }
+      yPosition += 10;
       
-    } catch (finalError) {
-      console.log('❌ Impossible d\'ajouter un logo de fallback');
+      // Détails de la réclamation
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(secondaryColor);
+      doc.text('DÉTAILS DE LA RÉCLAMATION', 20, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(textColor);
+      
+      // Type
+      doc.text(`Type: ${this.getTypeReclLabel(reclamation.typeRecl)}`, 20, yPosition);
+      yPosition += 8;
+      
+      // État
+      doc.text(`État: ${this.getEtatReclLabel(reclamation.etatRecl)}`, 20, yPosition);
+      yPosition += 8;
+      
+      // Date de création
+      doc.text(`Date de création: ${this.formatDate(reclamation.dateRecl)}`, 20, yPosition);
+      yPosition += 8;
+      
+      // Date de réponse si disponible
+      if (reclamation.dateReponRecl) {
+        doc.text(`Date de réponse: ${this.formatDate(reclamation.dateReponRecl)}`, 20, yPosition);
+        yPosition += 8;
+      }
+      yPosition += 5;
+      
+      // Description
+      doc.setFont('helvetica', 'bold');
+      doc.text('Description:', 20, yPosition);
+      yPosition += 8;
+      
+      doc.setFont('helvetica', 'normal');
+      // Diviser la description en lignes pour qu'elle s'adapte à la page
+      const descriptionLines = doc.splitTextToSize(reclamation.descriptionRecl, 170);
+      doc.text(descriptionLines, 20, yPosition);
+      yPosition += descriptionLines.length * 6 + 10;
+      
+      // Réponse si disponible
+      if (reclamation.descriptionReponRecl) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Réponse:', 20, yPosition);
+        yPosition += 8;
+        
+        doc.setFont('helvetica', 'normal');
+        const responseLines = doc.splitTextToSize(reclamation.descriptionReponRecl, 170);
+        doc.text(responseLines, 20, yPosition);
+        yPosition += responseLines.length * 6 + 10;
+      }
+      
+      // Fichiers joints
+      // if (reclamation.captureRecl || reclamation.documentRecl) {
+      //   doc.setFont('helvetica', 'bold');
+      //   doc.text('Fichiers joints:', 20, yPosition);
+      //   yPosition += 8;
+        
+      //   doc.setFont('helvetica', 'normal');
+      //   if (reclamation.captureRecl) {
+      //     doc.text('• Capture d\'écran: Voir fichier joint', 25, yPosition);
+      //     yPosition += 6;
+      //   }
+      //   if (reclamation.documentRecl) {
+      //     doc.text('• Document: Voir fichier joint', 25, yPosition);
+      //     yPosition += 6;
+      //   }
+      //   yPosition += 10;
+      // }
+      //
+
+      // Footer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Ce document est généré automatiquement par le système Tunisie Telecom.', 20, pageHeight - 20);
+      doc.text(`Réclamation #${reclamation.idRecl} - ${currentDate}`, 20, pageHeight - 12);
+      
+      // Ligne de séparation footer
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+      
+      // Télécharger le PDF
+      const fileName = `Reclamation_${reclamation.idRecl}_${currentDate.replace(/\//g, '-')}.pdf`;
+      doc.save(fileName);
+      
+      // Afficher une notification de succès
+      this.notificationService.showSuccess('PDF téléchargé avec succès!');
+      
+    } catch (error) {
+      console.error('Erreur lors de la génération du contenu PDF:', error);
+      this.notificationService.showError('Erreur lors de la génération du PDF');
     }
   }
-
 }
