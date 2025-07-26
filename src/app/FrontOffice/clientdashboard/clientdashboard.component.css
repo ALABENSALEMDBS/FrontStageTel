@@ -2943,7 +2943,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  background: linear-gradient(135deg, #1767d0 0%, #4785d5 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -2955,7 +2955,7 @@
 }
 
 .download-pdf-btn:hover {
-  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  background: linear-gradient(135deg, #3087f9 0%, #67a5f5 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
@@ -2975,15 +2975,306 @@
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
 }
 
+/* Styles pour le bouton de suppression */
+.delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.delete-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+.delete-btn .btn-icon {
+  font-size: 1.1rem;
+  margin-right: 0.25rem;
+}
+
+/* Modal de confirmation de suppression */
+.delete-confirmation-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.delete-confirmation-modal .modal-header {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.delete-confirmation-modal .modal-title {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.confirmation-content {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.warning-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.confirmation-content h4 {
+  color: #1f2937;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.reclamation-details {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.warning-message {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.warning-message p {
+  margin: 0;
+  color: #92400e;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.warning-message strong {
+  color: #78350f;
+}
+
+/* Boutons du modal de confirmation */
+.btn-cancel {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 1rem;
+}
+
+.btn-cancel:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+.btn-cancel:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.btn-delete:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Bannière d'information pour la limitation des réclamations */
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+  border: 1px solid #0288d1;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(2, 136, 209, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.info-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: #0288d1;
+}
+
+.info-icon {
+  font-size: 1.5rem;
+  color: #0277bd;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-content h5 {
+  margin: 0 0 0.5rem 0;
+  /* color: #01579b; */
+  color: red;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.info-content p {
+  margin: 0;
+  color: #0277bd;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.info-content strong {
+  color: #01579b;
+  font-weight: 700;
+}
+
+/* Animation pour la bannière */
+@keyframes slideInInfo {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-banner {
+  animation: slideInInfo 0.4s ease-out;
+}
+
+/* Responsive pour la bannière */
+@media (max-width: 768px) {
+  .info-banner {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .info-icon {
+    font-size: 1.3rem;
+  }
+  
+  .info-content h5 {
+    font-size: 0.95rem;
+  }
+  
+  .info-content p {
+    font-size: 0.85rem;
+  }
+}
+
 /* Responsive pour le bouton PDF */
 @media (max-width: 768px) {
   .reclamation-actions {
     justify-content: center;
+    gap: 0.75rem;
   }
   
-  .download-pdf-btn {
+  .download-pdf-btn,
+  .delete-btn {
     flex: 1;
     justify-content: center;
-    max-width: 200px;
+    max-width: 150px;
+    font-size: 0.9rem;
+    padding: 0.65rem 1.25rem;
+  }
+  
+  .delete-confirmation-modal {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .confirmation-content h4 {
+    font-size: 1.1rem;
+  }
+  
+  .warning-icon {
+    font-size: 3rem;
   }
 }

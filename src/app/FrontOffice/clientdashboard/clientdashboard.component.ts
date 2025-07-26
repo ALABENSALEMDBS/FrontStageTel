@@ -60,6 +60,11 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   filteredReclamationsList: any[] = []
   isLoadingReclamations = false
   
+  // Variables pour la confirmation de suppression
+  isDeleteConfirmationOpen = false
+  reclamationToDelete: any = null
+  isDeletingReclamation = false
+  
   // Variables pour les filtres
   filterTypeRecl = ''
   filterEtatRecl = ''
@@ -380,7 +385,7 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationModalOpen || this.isReclamationsListModalOpen || this.isDeleteConfirmationOpen || this.isPhotoModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
@@ -1359,4 +1364,66 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       this.notificationService.showError('Erreur lors de la génération du PDF');
     }
   }
+
+  // Méthodes pour la suppression de réclamations
+  openDeleteConfirmation(reclamation: any) {
+    this.reclamationToDelete = reclamation;
+    this.isDeleteConfirmationOpen = true;
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+    console.log("🗑️ Ouverture de la confirmation de suppression pour réclamation:", reclamation.idRecl);
+  }
+
+  closeDeleteConfirmation() {
+    this.isDeleteConfirmationOpen = false;
+    this.reclamationToDelete = null;
+    this.isDeletingReclamation = false;
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log("❌ Fermeture de la confirmation de suppression");
+  }
+
+  confirmDeleteReclamation() {
+    if (!this.reclamationToDelete || this.isDeletingReclamation) {
+      return;
+    }
+
+    this.isDeletingReclamation = true;
+    const reclamationId = this.reclamationToDelete.idRecl;
+    
+    console.log("🗑️ Suppression de la réclamation en cours:", reclamationId);
+
+    this.gestionReclamationService.deleteReclamation(reclamationId).subscribe({
+      next: (response) => {
+        console.log("✅ Réclamation supprimée avec succès:", response);
+        this.isDeletingReclamation = false;
+        
+        // Fermer le modal de confirmation
+        this.closeDeleteConfirmation();
+        
+        // Mettre à jour la liste des réclamations
+        this.loadReclamations();
+        this.loadReclamationsCount();
+        
+        // Afficher une notification de succès
+        this.notificationService.showSuccess('Réclamation supprimée avec succès !', 4000);
+      },
+      error: (error) => {
+        console.error("❌ Erreur lors de la suppression de la réclamation:", error);
+        this.isDeletingReclamation = false;
+        
+        let errorMessage = 'Une erreur s\'est produite lors de la suppression de la réclamation.';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les permissions pour supprimer cette réclamation.';
+        } else if (error.status === 404) {
+          errorMessage = 'Réclamation non trouvée.';
+        }
+        
+        this.notificationService.showError(errorMessage, 5000);
+      }
+    });
+  }
+
 }

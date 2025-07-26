@@ -505,6 +505,15 @@
     </div>
     
     <div class="modal-body">
+      <!-- Message d'information sur la limitation -->
+      <div class="info-banner">
+        <div class="info-icon">⚠️</div>
+        <div class="info-content">
+          <h5>Information importante</h5>
+          <p>Vous ne pouvez créer qu'<strong>une seule réclamation par heure</strong> pour assurer un traitement optimal de votre demande.</p>
+        </div>
+      </div>
+
       <form [formGroup]="reclamationForm" class="reclamation-form">
         <!-- Type de réclamation -->
         <div class="form-group">
@@ -729,7 +738,7 @@
       <h3 class="modal-title">📋 Mes Réclamations</h3>
       <div class="header-actions">
         <button class="add-reclamation-btn-header" (click)="openReclamationModal(); closeReclamationsListModal()">
-          <span class="btn-icon">➕</span>
+          <span class="btn-icon">📝</span>
           Nouvelle réclamation
         </button>
         <button class="modal-close" (click)="closeReclamationsListModal()">×</button>
@@ -881,7 +890,16 @@
                   title="Télécharger le récépissé PDF"
                 >
                   <span class="btn-icon">📄</span>
-                  Télécharger PDF
+                  Télécharger votre reçu
+                </button>
+
+                <button 
+                  class="delete-btn"
+                  (click)="openDeleteConfirmation(reclamation)"
+                  title="Supprimer cette réclamation"
+                >
+                  <span class="btn-icon">🗑️</span>
+                  Supprimer
                 </button>
               </div>
             </div>
@@ -898,5 +916,65 @@
         ➕ Nouvelle réclamation
       </button>
     </div> -->
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal-overlay" [class.show]="isDeleteConfirmationOpen" (click)="closeDeleteConfirmation()">
+  <div class="modal-content delete-confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">🗑️ Confirmer la suppression</h3>
+      <button class="modal-close" (click)="closeDeleteConfirmation()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="confirmation-content" *ngIf="reclamationToDelete">
+        <div class="warning-icon">⚠️</div>
+        <h4>Êtes-vous sûr de vouloir supprimer cette réclamation ?</h4>
+        <div class="reclamation-details">
+          <div class="detail-item">
+            <span class="detail-label">ID :</span>
+            <span class="detail-value">#{{ reclamationToDelete.idRecl }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Type :</span>
+            <span class="detail-value">{{ getTypeReclLabel(reclamationToDelete.typeRecl) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">État :</span>
+            <span class="detail-value status-badge" [class]="getEtatReclClass(reclamationToDelete.etatRecl)">
+              {{ getEtatReclLabel(reclamationToDelete.etatRecl) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Date :</span>
+            <span class="detail-value">{{ formatDate(reclamationToDelete.dateRecl) }}</span>
+          </div>
+        </div>
+        <div class="warning-message">
+          <p><strong>⚠️ Attention :</strong> Cette action est irréversible. La réclamation sera définitivement supprimée et ne pourra pas être récupérée.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button 
+        type="button" 
+        class="btn-cancel" 
+        (click)="closeDeleteConfirmation()"
+        [disabled]="isDeletingReclamation"
+      >
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn-delete" 
+        (click)="confirmDeleteReclamation()"
+        [disabled]="isDeletingReclamation"
+      >
+        <span *ngIf="isDeletingReclamation">🔄 Suppression...</span>
+        <span *ngIf="!isDeletingReclamation">🗑️ Supprimer définitivement</span>
+      </button>
+    </div>
   </div>
 </div>
