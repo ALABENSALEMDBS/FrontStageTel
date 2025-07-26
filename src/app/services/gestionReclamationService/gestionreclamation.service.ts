@@ -19,4 +19,8 @@ export class GestionreclamationService {
   ajouterReclamation(reclamation: Reclamation, idUser: number): Observable<Reclamation> {
     return this.http.post<Reclamation>(`${this.baseUrl}/ajouter/${idUser}`, reclamation);
   }
+
+  getReclamation(idUser: number): Observable<Reclamation[]> {
+    return this.http.get<Reclamation[]>(`${this.baseUrl}/getReclByUser/${idUser}`);
+  }
 }
