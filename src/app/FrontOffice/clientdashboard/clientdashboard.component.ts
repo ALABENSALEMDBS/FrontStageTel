@@ -1,6 +1,6 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../core/models/ChangePhoto';
@@ -12,7 +12,7 @@ import { UserStateService } from '../../services/user-state.service';
 
 @Component({
   selector: 'app-clientdashboard',
-  imports: [NgFor, NgIf, ReactiveFormsModule],
+  imports: [NgFor, NgIf, ReactiveFormsModule, FormsModule],
   templateUrl: './clientdashboard.component.html',
   styleUrl: './clientdashboard.component.css'
 })
@@ -52,6 +52,35 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
   // Variables pour la modal photo
   isPhotoModalOpen = false
+
+  // Variables pour le modal de liste des réclamations
+  isReclamationsListModalOpen = false
+  reclamationsList: any[] = []
+  filteredReclamationsList: any[] = []
+  isLoadingReclamations = false
+  
+  // Variables pour les filtres
+  filterTypeRecl = ''
+  filterEtatRecl = ''
+  filterIdRecl = ''
+  
+  // Options pour les filtres
+  typeReclOptions = [
+    { value: '', label: 'Tous les types' },
+    { value: 'Mon_compte_MY_TT', label: 'Mon compte MY TT' },
+    { value: 'Mon_Mobile', label: 'Mon Mobile' },
+    { value: 'Internet_Mobile', label: 'Internet Mobile' },
+    { value: 'Mon_Fixe', label: 'Mon Fixe' },
+    { value: 'Service_e_Facture', label: 'Service e-Facture' }
+  ]
+  
+  etatReclOptions = [
+    { value: '', label: 'Tous les états' },
+    { value: 'EN_ATTENTE', label: 'En attente' },
+    { value: 'EN_COURS', label: 'En cours' },
+    { value: 'TRAITEE', label: 'Résolu' },
+    { value: 'REJETEE', label: 'Fermé' }
+  ]
 
   services = [
     {
@@ -137,11 +166,18 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     // S'abonner aux changements d'état de l'utilisateur
     this.userStateService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      // Charger les réclamations lorsque l'utilisateur est disponible
+      if (user && user.idUser) {
+        this.loadReclamationsCount();
+      }
     });
     
     // Vérifier si l'utilisateur est connecté
     if (!this.gestionUserService.isAuthenticated() || !this.currentUser) {
       this.router.navigate(['/login']);
+    } else if (this.currentUser && this.currentUser.idUser) {
+      // Charger le nombre de réclamations immédiatement si l'utilisateur est déjà disponible
+      this.loadReclamationsCount();
     }
   }
 
@@ -626,19 +662,6 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // Méthode utilitaire pour vérifier l'état des fichiers
-  hasFilesToUpload(): boolean {
-    return !!(this.selectedCaptureFile || this.selectedDocumentFile);
-  }
-
-  // Méthode pour obtenir le nombre de fichiers sélectionnés
-  getSelectedFilesCount(): number {
-    let count = 0;
-    if (this.selectedCaptureFile) count++;
-    if (this.selectedDocumentFile) count++;
-    return count;
-  }
-
   // Méthode pour soumettre la réclamation
   submitReclamation() {
     if (this.reclamationForm.valid) {
@@ -662,6 +685,9 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
             
             // Fermer le modal après soumission
             this.closeReclamationModal();
+            
+            // Mettre à jour le nombre de réclamations
+            this.loadReclamationsCount();
             
             // Afficher une notification de succès
             this.notificationService.showSuccess('Réclamation soumise avec succès !', 4000);
@@ -788,6 +814,141 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     // Restaurer le scroll de la page
     document.body.style.overflow = 'auto';
     console.log("Modal réclamation fermé");
+  }
+
+  // Méthodes pour le modal de liste des réclamations
+  openReclamationsListModal() {
+    this.isReclamationsListModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    this.loadReclamations();
+    console.log("Modal liste des réclamations ouvert");
+  }
+
+  closeReclamationsListModal() {
+    this.isReclamationsListModalOpen = false;
+    document.body.style.overflow = 'auto';
+    // Réinitialiser les filtres
+    this.filterTypeRecl = '';
+    this.filterEtatRecl = '';
+    this.filterIdRecl = '';
+    console.log("Modal liste des réclamations fermé");
+  }
+
+  loadReclamations() {
+    if (!this.currentUser?.idUser) {
+      this.notificationService.showError('Utilisateur non identifié', 3000);
+      return;
+    }
+
+    this.isLoadingReclamations = true;
+    console.log("📋 Chargement des réclamations pour l'utilisateur:", this.currentUser.idUser);
+
+    this.gestionReclamationService.getReclamation(this.currentUser.idUser).subscribe({
+      next: (response: any) => {
+        console.log("✅ Réclamations chargées:", response);
+        this.reclamationsList = response || [];
+        this.applyFilters();
+        this.isLoadingReclamations = false;
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des réclamations:", error);
+        this.isLoadingReclamations = false;
+        this.reclamationsList = [];
+        this.filteredReclamationsList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des réclamations';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 404) {
+          errorMessage = 'Aucune réclamation trouvée';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  // Méthode pour charger seulement le nombre de réclamations (pour l'affichage du dashboard)
+  loadReclamationsCount() {
+    if (!this.currentUser?.idUser) {
+      return;
+    }
+
+    console.log("📊 Chargement du nombre de réclamations pour l'utilisateur:", this.currentUser.idUser);
+
+    this.gestionReclamationService.getReclamation(this.currentUser.idUser).subscribe({
+      next: (response: any) => {
+        console.log("✅ Nombre de réclamations chargé:", response?.length || 0);
+        this.reclamationsList = response || [];
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement du nombre de réclamations:", error);
+        this.reclamationsList = [];
+      }
+    });
+  }
+
+  applyFilters() {
+    this.filteredReclamationsList = this.reclamationsList.filter(reclamation => {
+      const matchType = !this.filterTypeRecl || reclamation.typeRecl === this.filterTypeRecl;
+      const matchEtat = !this.filterEtatRecl || reclamation.etatRecl === this.filterEtatRecl;
+      const matchId = !this.filterIdRecl || reclamation.idRecl.toString().includes(this.filterIdRecl);
+      
+      return matchType && matchEtat && matchId;
+    });
+    
+    console.log("🔍 Filtres appliqués:", {
+      total: this.reclamationsList.length,
+      filtered: this.filteredReclamationsList.length,
+      filters: {
+        type: this.filterTypeRecl,
+        etat: this.filterEtatRecl,
+        id: this.filterIdRecl
+      }
+    });
+  }
+
+  onFilterChange() {
+    this.applyFilters();
+  }
+
+  clearFilters() {
+    this.filterTypeRecl = '';
+    this.filterEtatRecl = '';
+    this.filterIdRecl = '';
+    this.applyFilters();
+  }
+
+  getEtatReclLabel(etat: string): string {
+    const option = this.etatReclOptions.find(opt => opt.value === etat);
+    return option ? option.label : etat;
+  }
+
+  getTypeReclLabel(type: string): string {
+    const option = this.typeReclOptions.find(opt => opt.value === type);
+    return option ? option.label : type;
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'Non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getEtatReclClass(etat: string): string {
+    switch (etat) {
+      case 'EN_ATTENTE': return 'status-pending';
+      case 'EN_COURS': return 'status-in-progress';
+      case 'TRAITEE': return 'status-resolved';
+      case 'REJETEE': return 'status-closed';
+      default: return 'status-unknown';
+    }
   }
 
   // Méthodes pour les prévisualisations

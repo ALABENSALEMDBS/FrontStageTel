@@ -77,15 +77,15 @@
         <p class="welcome-subtitle">Gérez vos services Tunisie Telecom en toute simplicité</p>
       </div>
       <div class="welcome-stats">
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
+        <div class="stat-card reclamations-card blinking" (click)="openReclamationsListModal()" style="cursor: pointer;">
+          <div class="stat-icon">📋</div>
           <div class="stat-info">
-            <div class="stat-number">3</div>
-            <div class="stat-label">Services actifs</div>
+            <div class="stat-number">{{reclamationsList.length}} Réclamation(s)</div>
+            <div class="stat-label">Afficher Réclamations</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">💳</div>
+          <div class="stat-icon">💳📊</div>
           <div class="stat-info">
             <div class="stat-number">125 DT</div>
             <div class="stat-label">Facture du mois</div>
@@ -495,7 +495,13 @@
   <div class="modal-content reclamation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3 class="modal-title">📝 Créer une réclamation</h3>
-      <button class="modal-close" (click)="closeReclamationModal()">×</button>
+      <div class="header-actions">
+        <button class="list-reclamations-btn-header" (click)="openReclamationsListModal(); closeReclamationModal()">
+          <span class="btn-icon">📋</span>
+          Lister mes réclamations
+        </button>
+        <button class="modal-close" (click)="closeReclamationModal()">×</button>
+      </div>
     </div>
     
     <div class="modal-body">
@@ -713,5 +719,172 @@
         <span *ngIf="!isSubmittingReclamation">📝 Envoyer la réclamation</span>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Modal pour afficher la liste des réclamations -->
+<div class="modal-overlay" [class.show]="isReclamationsListModalOpen" (click)="closeReclamationsListModal()">
+  <div class="modal-content reclamations-list-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Mes Réclamations</h3>
+      <div class="header-actions">
+        <button class="add-reclamation-btn-header" (click)="openReclamationModal(); closeReclamationsListModal()">
+          <span class="btn-icon">➕</span>
+          Nouvelle réclamation
+        </button>
+        <button class="modal-close" (click)="closeReclamationsListModal()">×</button>
+      </div>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Filtres -->
+      <div class="filters-section">
+        <h4 class="filters-title">🔍 Filtres</h4>
+        <div class="filters-row">
+          <div class="filter-group">
+            <label for="filterType">Type :</label>
+            <select 
+              id="filterType" 
+              [(ngModel)]="filterTypeRecl" 
+              (change)="onFilterChange()"
+              class="filter-select"
+            >
+              <option *ngFor="let option of typeReclOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterEtat">État :</label>
+            <select 
+              id="filterEtat" 
+              [(ngModel)]="filterEtatRecl" 
+              (change)="onFilterChange()"
+              class="filter-select"
+            >
+              <option *ngFor="let option of etatReclOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterId">ID :</label>
+            <input 
+              id="filterId" 
+              type="text" 
+              [(ngModel)]="filterIdRecl" 
+              (input)="onFilterChange()"
+              placeholder="Rechercher par ID..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-actions">
+            <button class="clear-filters-btn" (click)="clearFilters()">
+              🔄 Effacer
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading -->
+      <div class="loading-section" *ngIf="isLoadingReclamations">
+        <div class="loading-spinner"></div>
+        <p>Chargement des réclamations...</p>
+      </div>
+      
+      <!-- Liste des réclamations -->
+      <div class="reclamations-list" *ngIf="!isLoadingReclamations">
+        <div class="reclamations-header">
+          <h4>
+            📊 {{ filteredReclamationsList.length }} réclamation(s) 
+            <span *ngIf="filteredReclamationsList.length !== reclamationsList.length">
+              sur {{ reclamationsList.length }}
+            </span>
+          </h4>
+        </div>
+        
+        <!-- Message si aucune réclamation -->
+        <div class="no-reclamations" *ngIf="filteredReclamationsList.length === 0">
+          <div class="no-data-icon">📭</div>
+          <h5>Aucune réclamation trouvée</h5>
+          <p *ngIf="reclamationsList.length === 0">Vous n'avez pas encore créé de réclamation.</p>
+          <p *ngIf="reclamationsList.length > 0">Aucune réclamation ne correspond à vos critères de recherche.</p>
+        </div>
+        
+        <!-- Cartes des réclamations -->
+        <div class="reclamations-grid" *ngIf="filteredReclamationsList.length > 0">
+          <div class="reclamation-card" *ngFor="let reclamation of filteredReclamationsList">
+            <div class="reclamation-header">
+              <div class="reclamation-id">
+                <span class="id-label">ID:</span>
+                <span class="id-value">#{{ reclamation.idRecl }}</span>
+              </div>
+              <div class="reclamation-status" [class]="getEtatReclClass(reclamation.etatRecl)">
+                {{ getEtatReclLabel(reclamation.etatRecl) }}
+              </div>
+            </div>
+            
+            <div class="reclamation-body">
+              <div class="reclamation-type">
+                <span class="type-icon">🏷️</span>
+                <span class="type-text">{{ getTypeReclLabel(reclamation.typeRecl) }}</span>
+              </div>
+              
+              <div class="reclamation-description">
+                <p>{{ reclamation.descriptionRecl }}</p>
+              </div>
+              
+              <div class="reclamation-dates">
+                <div class="date-item">
+                  <span class="date-label">📅 Créée le:</span>
+                  <span class="date-value">{{ formatDate(reclamation.dateRecl) }}</span>
+                </div>
+                <div class="date-item" *ngIf="reclamation.dateReponRecl">
+                  <span class="date-label">✅ Répondue le:</span>
+                  <span class="date-value">{{ formatDate(reclamation.dateReponRecl) }}</span>
+                </div>
+              </div>
+              
+              <!-- Réponse si disponible -->
+              <div class="reclamation-response" *ngIf="reclamation.descriptionReponRecl">
+                <h6>💬 Réponse:</h6>
+                <p>{{ reclamation.descriptionReponRecl }}</p>
+              </div>
+              
+              <!-- Fichiers joints -->
+              <div class="reclamation-files" *ngIf="reclamation.captureRecl || reclamation.documentRecl">
+                <h6>📎 Fichiers joints:</h6>
+                <div class="files-list">
+                  <div class="file-item" *ngIf="reclamation.captureRecl">
+                    <span class="file-icon">📷</span>
+                    <a [href]="reclamation.captureRecl" target="_blank" class="file-link">
+                      Capture d'écran
+                    </a>
+                  </div>
+                  <div class="file-item" *ngIf="reclamation.documentRecl">
+                    <span class="file-icon">📄</span>
+                    <a [href]="reclamation.documentRecl" target="_blank" class="file-link">
+                      Document
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeReclamationsListModal()">
+        Fermer
+      </button>
+      <button class="btn-primary" (click)="openReclamationModal(); closeReclamationsListModal()">
+        ➕ Nouvelle réclamation
+      </button>
+    </div> -->
   </div>
 </div>
