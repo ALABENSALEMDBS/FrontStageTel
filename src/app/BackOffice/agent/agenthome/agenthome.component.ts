@@ -50,6 +50,12 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   filterEtatRecl = '';
   filterEmailClient = '';
   
+  // Variables pour le modal de réponse aux réclamations
+  isResponseModalOpen = false;
+  selectedReclamationForResponse: any = null;
+  responseForm: FormGroup;
+  isSubmittingResponse = false;
+  
   // Options pour les filtres des réclamations agent
   etatReclOptions = [
     { value: '', label: 'Tous les états' },
@@ -159,6 +165,11 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
+
+    // Initialiser le formulaire de réponse aux réclamations
+    this.responseForm = this.fb.group({
+      descriptionReponRecl: ['', [Validators.required, Validators.minLength(10)]]
+    });
   }
 
   // Validateur personnalisé pour vérifier que les mots de passe correspondent
@@ -651,8 +662,80 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   }
 
   respondToReclamation(reclamation: any) {
-    console.log("Répondre à la réclamation:", reclamation);
-    // Implémenter la réponse à la réclamation
+    this.selectedReclamationForResponse = reclamation;
+    this.responseForm.reset();
+    this.isResponseModalOpen = true;
+    
+    // Mettre immédiatement la réclamation en cours même si l'agent n'écrit pas de réponse
+    this.mettreReclamationEnCours(reclamation);
+  }
+
+  // Méthode pour mettre une réclamation en cours
+  mettreReclamationEnCours(reclamation: any) {
+    const reclamationId = reclamation.idRecl || reclamation.id;
+    
+    this.gestionReclamationService.mettreEnCours(reclamationId).subscribe({
+      next: (response) => {
+        console.log('Réclamation mise en cours:', response);
+        // Mettre à jour l'état local de la réclamation
+        const index = this.reclamationsList.findIndex(r => r.idRecl === reclamationId);
+        if (index !== -1) {
+          this.reclamationsList[index].etatRecl = 'EN_COURS';
+          this.applyReclamationsFilters();
+        }
+        this.notificationService.showSuccess('Réclamation mise en cours avec succès');
+      },
+      error: (error) => {
+        console.error('Erreur lors de la mise en cours:', error);
+        this.notificationService.showError('Erreur lors de la mise en cours de la réclamation');
+      }
+    });
+  }
+
+  // Fermer le modal de réponse
+  closeResponseModal() {
+    this.isResponseModalOpen = false;
+    this.selectedReclamationForResponse = null;
+    this.responseForm.reset();
+    this.isSubmittingResponse = false;
+  }
+
+  // Soumettre la réponse
+  onSubmitResponse() {
+    if (this.responseForm.invalid || !this.selectedReclamationForResponse) {
+      return;
+    }
+
+    this.isSubmittingResponse = true;
+    
+    // Créer l'objet réclamation avec la réponse
+    const reclamationToUpdate = {
+      ...this.selectedReclamationForResponse,
+      descriptionReponRecl: this.responseForm.get('descriptionReponRecl')?.value,
+      dateReponRecl: new Date(),
+      etatRecl: 'TRAITEE'
+    };
+
+    const reclamationId = this.selectedReclamationForResponse.idRecl || this.selectedReclamationForResponse.id;
+
+    this.gestionReclamationService.repondreReclamation(reclamationId, reclamationToUpdate).subscribe({
+      next: (response) => {
+        console.log('Réponse envoyée:', response);
+        // Mettre à jour l'état local de la réclamation
+        const index = this.reclamationsList.findIndex(r => r.idRecl === reclamationId);
+        if (index !== -1) {
+          this.reclamationsList[index] = response;
+          this.applyReclamationsFilters();
+        }
+        this.notificationService.showSuccess('Réponse envoyée avec succès');
+        this.closeResponseModal();
+      },
+      error: (error) => {
+        console.error('Erreur lors de l\'envoi de la réponse:', error);
+        this.notificationService.showError('Erreur lors de l\'envoi de la réponse');
+        this.isSubmittingResponse = false;
+      }
+    });
   }
 
   // Méthodes pour la gestion des renseignements
