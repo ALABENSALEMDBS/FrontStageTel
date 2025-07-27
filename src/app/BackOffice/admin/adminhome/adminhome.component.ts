@@ -1,17 +1,18 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
+import { Utilisateur } from '../../../../core/models/Utilisateur';
+import { GestionreclamationService } from '../../../services/gestionReclamationService/gestionreclamation.service';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
 import { UserStateService } from '../../../services/user-state.service';
-import { Utilisateur } from '../../../../core/models/Utilisateur';
 
 @Component({
   selector: 'app-adminhome',
-  imports: [NgFor, NgIf, ReactiveFormsModule],
+  imports: [NgFor, NgIf, ReactiveFormsModule, FormsModule],
   templateUrl: './adminhome.component.html',
   styleUrl: './adminhome.component.css'
 })
@@ -39,6 +40,26 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   // Variables pour la mise à jour de la photo
   isUpdatingPhoto = false;
 
+  // Variables pour le modal des réclamations
+  isReclamationsModalOpen = false;
+  reclamationsList: any[] = [];
+  filteredReclamationsList: any[] = [];
+  isLoadingReclamations = false;
+  
+  // Variables pour les filtres des réclamations
+  filterIdRecl = '';
+  filterEtatRecl = '';
+  filterEmailClient = '';
+  
+  // Options pour les filtres des réclamations
+  etatReclOptions = [
+    { value: '', label: 'Tous les états' },
+    { value: 'EN_ATTENTE', label: 'En attente' },
+    { value: 'EN_COURS', label: 'En cours' },
+    { value: 'TRAITEE', label: 'Traitée' },
+    { value: 'REJETEE', label: 'Rejetée' }
+  ];
+
   // Date actuelle pour l'affichage
   currentDate = new Date().toLocaleDateString('fr-FR');
 
@@ -49,6 +70,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     private router: Router,
     private fb: FormBuilder,
     private gestionUserService: GestionuserService,
+    private gestionReclamationService: GestionreclamationService,
     private userStateService: UserStateService,
     private notificationService: NotificationService
   ) {
@@ -76,6 +98,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
         this.fetchClients();
         this.fetchAgents();
+        this.fetchReclamations();
     // Récupérer les données de l'utilisateur connecté
     this.currentUser = this.gestionUserService.getCurrentUser();
     
@@ -116,10 +139,21 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   });
 }
 
+  /**
+   * Charge tous les agents
+   */
+  fetchReclamations(): void {
+  // appel vers l'API pour récupérer les réclamations
+  this.gestionReclamationService.getAllReclamations().subscribe(data => {
+    this.reclamationsList = data;
+    this.adminStats.totalreclamation = this.reclamationsList.length;
+  });
+}
+
    // Statistiques admin (exemple)
   adminStats = {
     totalClient: 0,
-    reclamation: 1180,
+    totalreclamation: 0,
     totalAgent: 0,
     Renseignement: 1180
   };
@@ -405,7 +439,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationsModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
@@ -430,4 +464,123 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     console.log("Navigation vers paramètres");
     // Implémenter la navigation
   }
+
+  // Méthodes pour le modal des réclamations
+  openReclamationsModal() {
+    this.isReclamationsModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    this.loadAllReclamations();
+    console.log("Modal réclamations admin ouvert");
+  }
+
+  closeReclamationsModal() {
+    this.isReclamationsModalOpen = false;
+    document.body.style.overflow = 'auto';
+    // Réinitialiser les filtres
+    this.filterIdRecl = '';
+    this.filterEtatRecl = '';
+    this.filterEmailClient = '';
+    console.log("Modal réclamations admin fermé");
+  }
+
+  loadAllReclamations() {
+    this.isLoadingReclamations = true;
+    console.log("📋 Chargement de toutes les réclamations...");
+
+    this.gestionReclamationService.getAllReclamations().subscribe({
+      next: (response: any) => {
+        console.log("✅ Réclamations chargées:", response);
+        this.reclamationsList = response || [];
+        this.applyReclamationsFilters();
+        this.isLoadingReclamations = false;
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des réclamations:", error);
+        this.isLoadingReclamations = false;
+        this.reclamationsList = [];
+        this.filteredReclamationsList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des réclamations';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les permissions pour voir les réclamations.';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  applyReclamationsFilters() {
+    this.filteredReclamationsList = this.reclamationsList.filter(reclamation => {
+      const matchId = !this.filterIdRecl || reclamation.idRecl.toString().includes(this.filterIdRecl);
+      const matchEtat = !this.filterEtatRecl || reclamation.etatRecl === this.filterEtatRecl;
+      const matchEmail = !this.filterEmailClient || 
+        (reclamation.utilisateurRecl?.emailUser && 
+         reclamation.utilisateurRecl.emailUser.toLowerCase().includes(this.filterEmailClient.toLowerCase()));
+      
+      return matchId && matchEtat && matchEmail;
+    });
+    
+    console.log("🔍 Filtres appliqués sur les réclamations:", {
+      total: this.reclamationsList.length,
+      filtered: this.filteredReclamationsList.length,
+      filters: {
+        id: this.filterIdRecl,
+        etat: this.filterEtatRecl,
+        email: this.filterEmailClient
+      }
+    });
+  }
+
+  onReclamationsFilterChange() {
+    this.applyReclamationsFilters();
+  }
+
+  clearReclamationsFilters() {
+    this.filterIdRecl = '';
+    this.filterEtatRecl = '';
+    this.filterEmailClient = '';
+    this.applyReclamationsFilters();
+  }
+
+  getEtatReclLabel(etat: string): string {
+    const option = this.etatReclOptions.find(opt => opt.value === etat);
+    return option ? option.label : etat;
+  }
+
+  getEtatReclClass(etat: string): string {
+    switch (etat) {
+      case 'EN_ATTENTE': return 'status-pending';
+      case 'EN_COURS': return 'status-in-progress';
+      case 'TRAITEE': return 'status-resolved';
+      case 'REJETEE': return 'status-closed';
+      default: return 'status-unknown';
+    }
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'Non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getTypeReclLabel(type: string): string {
+    const typeLabels: { [key: string]: string } = {
+      'Mon_compte_MY_TT': 'Mon compte MY TT',
+      'Mon_Mobile': 'Mon Mobile',
+      'Internet_Mobile': 'Internet Mobile',
+      'Mon_Fixe': 'Mon Fixe',
+      'Service_e_Facture': 'Service e-Facture'
+    };
+    return typeLabels[type] || type;
+  }
+
 }

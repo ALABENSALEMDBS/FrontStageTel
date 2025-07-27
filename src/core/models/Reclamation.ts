@@ -1,3 +1,5 @@
+import { Utilisateur } from "./Utilisateur";
+
 export enum TypeRecl {
     Mon_compte_MY_TT = 'Mon_compte_MY_TT',
     Mon_Mobile = 'Mon_Mobile',
@@ -7,13 +9,10 @@ export enum TypeRecl {
 }
 
 export enum EtatRecl {
-    NOUVELLE = 'NOUVELLE',
     EN_COURS = 'EN_COURS',
-    ASSIGNEE = 'ASSIGNEE',
-    RESOLUE = 'RESOLUE',
-    FERMEE = 'FERMEE',
+    TRAITEE = 'TRAITEE',
     REJETEE = 'REJETEE',
-    EN_ATTENTE_CLIENT = 'EN_ATTENTE_CLIENT'
+    EN_ATTENTE = 'EN_ATTENTE'
 }
 
 export class Reclamation{
@@ -26,4 +25,5 @@ export class Reclamation{
     dateRecl!: Date;
     descriptionReponRecl!: string;
     dateReponRecl!: Date
+    utilisateurRecl!: Utilisateur;
 }

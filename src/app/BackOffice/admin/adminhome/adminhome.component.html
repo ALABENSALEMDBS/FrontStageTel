@@ -137,11 +137,11 @@
             <div class="stat-label">Clients</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" (click)="openReclamationsModal()" style="cursor: pointer;">
           <div class="stat-icon admin-stat">🧾</div>
           <div class="stat-info">
-            <div class="stat-number">{{ adminStats.reclamation }}</div>
-            <div class="stat-label">Réclamation</div>
+            <div class="stat-number">{{ adminStats.totalreclamation }} </div>
+            <div class="stat-label">Réclamation(s)</div>
           </div>
         </div>
         <div class="stat-card">
@@ -488,3 +488,192 @@
       </div>
     </div>
   </div>
+
+<!-- Modal pour afficher toutes les réclamations -->
+<div class="modal-overlay" [class.show]="isReclamationsModalOpen" (click)="closeReclamationsModal()">
+  <div class="modal-content reclamations-admin-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Toutes les Réclamations</h3>
+      <button class="modal-close" (click)="closeReclamationsModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Filtres -->
+      <div class="filters-section">
+        <h4 class="filters-title">🔍 Filtres</h4>
+        <div class="filters-row">
+          <div class="filter-group">
+            <label for="filterIdAdmin">ID Réclamation :</label>
+            <input 
+              id="filterIdAdmin" 
+              type="text" 
+              [(ngModel)]="filterIdRecl" 
+              (input)="onReclamationsFilterChange()"
+              placeholder="Rechercher par ID..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterEtatAdmin">État :</label>
+            <select 
+              id="filterEtatAdmin" 
+              [(ngModel)]="filterEtatRecl" 
+              (change)="onReclamationsFilterChange()"
+              class="filter-select"
+            >
+              <option *ngFor="let option of etatReclOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterEmailAdmin">Email Client :</label>
+            <input 
+              id="filterEmailAdmin" 
+              type="email" 
+              [(ngModel)]="filterEmailClient" 
+              (input)="onReclamationsFilterChange()"
+              placeholder="Rechercher par email..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-actions">
+            <button class="clear-filters-btn" (click)="clearReclamationsFilters()">
+              🔄 Effacer
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading -->
+      <div class="loading-section" *ngIf="isLoadingReclamations">
+        <div class="loading-spinner"></div>
+        <p>Chargement des réclamations...</p>
+      </div>
+      
+      <!-- Liste des réclamations -->
+      <div class="reclamations-list" *ngIf="!isLoadingReclamations">
+        <div class="reclamations-header">
+          <h4>
+            📊 {{ filteredReclamationsList.length }} réclamation(s) 
+            <span *ngIf="filteredReclamationsList.length !== reclamationsList.length">
+              sur {{ reclamationsList.length }}
+            </span>
+          </h4>
+        </div>
+        
+        <!-- Message si aucune réclamation -->
+        <div class="no-reclamations" *ngIf="filteredReclamationsList.length === 0">
+          <div class="no-data-icon">📭</div>
+          <h5>Aucune réclamation trouvée</h5>
+          <p *ngIf="reclamationsList.length === 0">Aucune réclamation n'a été créée.</p>
+          <p *ngIf="reclamationsList.length > 0">Aucune réclamation ne correspond à vos critères de recherche.</p>
+        </div>
+        
+        <!-- Cartes des réclamations -->
+        <div class="reclamations-grid" *ngIf="filteredReclamationsList.length > 0">
+          <div class="reclamation-card" *ngFor="let reclamation of filteredReclamationsList">
+            <div class="reclamation-header">
+              <div class="reclamation-id">
+                <span class="id-label">ID:</span>
+                <span class="id-value">#{{ reclamation.idRecl }}</span>
+              </div>
+              <div class="reclamation-status" [class]="getEtatReclClass(reclamation.etatRecl)">
+                {{ getEtatReclLabel(reclamation.etatRecl) }}
+              </div>
+            </div>
+            
+            <div class="reclamation-body">
+              <!-- Informations Client - Affiché en premier -->
+              <div class="reclamation-client" *ngIf="reclamation.utilisateurRecl">
+                <h6>👤 Informations Client</h6>
+                <div class="client-details">
+                  <div class="client-main-info">
+                    <div class="client-name">
+                      <span class="client-label">Nom complet:</span>
+                      <span class="client-value">{{ reclamation.utilisateurRecl.prenomUser }} {{ reclamation.utilisateurRecl.nomUser }}</span>
+                    </div>
+                    <div class="client-email">
+                      <span class="client-label">Email:</span>
+                      <span class="client-value">{{ reclamation.utilisateurRecl.emailUser }}</span>
+                    </div>
+                  </div>
+                  <div class="client-secondary-info">
+                    <div class="client-line" *ngIf="reclamation.utilisateurRecl.numeroLigne">
+                      <span class="client-label">N° Ligne:</span>
+                      <span class="client-value line-number">{{ reclamation.utilisateurRecl.numeroLigne }}</span>
+                    </div>
+                    <div class="client-id">
+                      <span class="client-label">ID Client:</span>
+                      <span class="client-value client-id-badge">#{{ reclamation.utilisateurRecl.idUser }}</span>
+                    </div>
+                    <div class="client-status" *ngIf="reclamation.utilisateurRecl.etatCompte">
+                      <span class="client-label">État compte:</span>
+                      <span class="client-value account-status" [class]="'status-' + reclamation.utilisateurRecl.etatCompte?.toLowerCase()">
+                        {{ reclamation.utilisateurRecl.etatCompte }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="reclamation-type">
+                <span class="type-icon">🏷️</span>
+                <span class="type-text">{{ getTypeReclLabel(reclamation.typeRecl) }}</span>
+              </div>
+              
+              <div class="reclamation-description">
+                <p>{{ reclamation.descriptionRecl }}</p>
+              </div>
+              
+              <div class="reclamation-dates">
+                <div class="date-item">
+                  <span class="date-label">📅 Créée le:</span>
+                  <span class="date-value">{{ formatDate(reclamation.dateRecl) }}</span>
+                </div>
+                <div class="date-item" *ngIf="reclamation.dateReponRecl">
+                  <span class="date-label">✅ Répondue le:</span>
+                  <span class="date-value">{{ formatDate(reclamation.dateReponRecl) }}</span>
+                </div>
+              </div>
+              
+              <!-- Réponse si disponible -->
+              <div class="reclamation-response" *ngIf="reclamation.descriptionReponRecl">
+                <h6>💬 Réponse:</h6>
+                <p>{{ reclamation.descriptionReponRecl }}</p>
+              </div>
+              
+              <!-- Fichiers joints -->
+              <div class="reclamation-files" *ngIf="reclamation.captureRecl || reclamation.documentRecl">
+                <h6>📎 Fichiers joints:</h6>
+                <div class="files-list">
+                  <div class="file-item" *ngIf="reclamation.captureRecl">
+                    <span class="file-icon">📷</span>
+                    <a [href]="reclamation.captureRecl" target="_blank" class="file-link">
+                      Capture d'écran
+                    </a>
+                  </div>
+                  <div class="file-item" *ngIf="reclamation.documentRecl">
+                    <span class="file-icon">📄</span>
+                    <a [href]="reclamation.documentRecl" target="_blank" class="file-link">
+                      Document
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeReclamationsModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
