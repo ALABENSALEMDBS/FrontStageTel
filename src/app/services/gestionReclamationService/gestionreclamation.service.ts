@@ -27,4 +27,12 @@ export class GestionreclamationService {
    deleteReclamation(id: number): Observable<string> {
     return this.http.delete<string>(`${this.baseUrl}/delete/${id}`, { responseType: 'text' as 'json' });
   }
+
+
+
+  getAllReclamations(): Observable<Reclamation[]> {
+    return this.http.get<Reclamation[]>(`${this.baseUrl}/getReclamations`);
+  }
+
+  
 }

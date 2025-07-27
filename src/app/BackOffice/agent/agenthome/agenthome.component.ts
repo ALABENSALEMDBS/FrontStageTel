@@ -1,16 +1,17 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
+import { GestionreclamationService } from '../../../services/gestionReclamationService/gestionreclamation.service';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
 import { UserStateService } from '../../../services/user-state.service';
 
 @Component({
   selector: 'app-agenthome',
-  imports: [NgFor, NgIf, ReactiveFormsModule, DatePipe],
+  imports: [NgFor, NgIf, ReactiveFormsModule, DatePipe, FormsModule],
   templateUrl: './agenthome.component.html',
   styleUrl: './agenthome.component.css'
 })
@@ -38,14 +39,35 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   // Variables pour la mise à jour de la photo
   isUpdatingPhoto = false;
 
+  // Variables pour le modal des réclamations agent
+  isReclamationsModalOpen = false;
+  reclamationsList: any[] = [];
+  filteredReclamationsList: any[] = [];
+  isLoadingReclamations = false;
+  
+  // Variables pour les filtres des réclamations agent
+  filterIdRecl = '';
+  filterEtatRecl = '';
+  filterEmailClient = '';
+  
+  // Options pour les filtres des réclamations agent
+  etatReclOptions = [
+    { value: '', label: 'Tous les états' },
+    { value: 'EN_ATTENTE', label: 'En attente' },
+    { value: 'EN_COURS', label: 'En cours' },
+    { value: 'TRAITEE', label: 'Traitée' },
+    { value: 'REJETEE', label: 'Rejetée' }
+  ];
+
   // Date actuelle pour l'affichage
   currentDate = new Date().toLocaleDateString('fr-FR');
 
-  // Statistiques agent (exemple)
+  // Statistiques agent (mise à jour avec vraies données)
   agentStats = {
-    totalReclamations: 45,
-    reclamationsEnCours: 12,
-    reclamationsResolues: 33,
+    totalReclamations: 0,
+    reclamationsEnCours: 0,
+    reclamationsResolues: 0,
+    reclamationsEnAttente: 0,
     totalRenseignements: 67,
     renseignementsEnCours: 8,
     renseignementsResolus: 59,
@@ -53,36 +75,47 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     tempsResponseMoyen: '2.5h'
   };
 
-  // Réclamations récentes (exemple)
-  recentReclamations = [
-    {
-      id: 'REC001',
-      client: 'Ahmed Ben Ali',
-      type: 'Problème de connexion',
-      statut: 'En cours',
-      priorite: 'Haute',
-      dateCreation: '2025-01-20',
-      description: 'Connexion internet instable depuis 3 jours'
-    },
-    {
-      id: 'REC002',
-      client: 'Fatma Trabelsi',
-      type: 'Facturation',
-      statut: 'Nouveau',
-      priorite: 'Moyenne',
-      dateCreation: '2025-01-20',
-      description: 'Erreur sur la facture du mois dernier'
-    },
-    {
-      id: 'REC003',
-      client: 'Mohamed Khelifi',
-      type: 'Service technique',
-      statut: 'Résolu',
-      priorite: 'Basse',
-      dateCreation: '2025-01-19',
-      description: 'Installation nouveau décodeur'
+  // Propriété calculée pour récupérer les réclamations récentes (les 3 dernières)
+  get recentReclamations(): any[] {
+    return this.reclamationsList
+      .sort((a, b) => new Date(b.dateRecl).getTime() - new Date(a.dateRecl).getTime())
+      .slice(0, 5)
+      .map(reclamation => ({
+        id: reclamation.idRecl,
+        client: reclamation.utilisateurRecl ? 
+          `${reclamation.utilisateurRecl.prenomUser} ${reclamation.utilisateurRecl.nomUser}` : 
+          'Client inconnu',
+        type: this.getTypeReclLabel(reclamation.typeRecl),
+        statut: this.getEtatReclLabel(reclamation.etatRecl),
+        priorite: this.calculatePriority(reclamation.etatRecl),
+        dateCreation: this.formatDate(reclamation.dateRecl),
+        description: reclamation.descriptionRecl,
+        etatRecl: reclamation.etatRecl,
+        statutColor: this.getStatutColor(reclamation.etatRecl)
+      }));
+  }
+
+  // Méthode pour obtenir la couleur du statut
+  getStatutColor(etat: string): string {
+    switch (etat) {
+      case 'REJETEE': return '#dc3545'; // Rouge
+      case 'TRAITEE': return '#28a745'; // Vert
+      case 'EN_COURS': return '#007bff'; // Bleu
+      case 'EN_ATTENTE': return '#fd7e14'; // Orange
+      default: return '#fd7e14'; // Orange par défaut
     }
-  ];
+  }
+
+  // Méthode pour calculer la priorité basée sur l'état
+  calculatePriority(etat: string): string {
+    switch (etat) {
+      case 'EN_ATTENTE': return 'Haute';
+      case 'EN_COURS': return 'Moyenne';
+      case 'TRAITEE': return 'Basse';
+      case 'REJETEE': return 'Basse';
+      default: return 'Moyenne';
+    }
+  }
 
   // Renseignements récents (exemple)
   recentRenseignements = [
@@ -116,6 +149,7 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     private router: Router,
     private fb: FormBuilder,
     private gestionUserService: GestionuserService,
+    private gestionReclamationService: GestionreclamationService,
     private userStateService: UserStateService,
     private notificationService: NotificationService
   ) {
@@ -155,6 +189,46 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     } else if (this.currentUser.role !== 'ROLE_AGENT') {
       this.router.navigate(['/login']);
     }
+
+    // Charger les réclamations réelles
+    this.loadReclamations();
+  }
+
+  /**
+   * Charge toutes les réclamations pour l'agent
+   */
+  loadReclamations(): void {
+    this.gestionReclamationService.getAllReclamations().subscribe({
+      next: (data) => {
+        this.reclamationsList = data || [];
+        // Mettre à jour les statistiques avec les vraies données
+        this.updateStatsFromRealData();
+        console.log("✅ Réclamations chargées pour l'agent:", this.reclamationsList);
+      },
+      error: (error) => {
+        console.error("❌ Erreur lors du chargement des réclamations:", error);
+        this.reclamationsList = [];
+        this.notificationService.showError('Erreur lors du chargement des réclamations', 4000);
+      }
+    });
+  }
+
+  /**
+   * Met à jour les statistiques avec les vraies données
+   */
+  updateStatsFromRealData(): void {
+    const total = this.reclamationsList.length;
+    const enCours = this.reclamationsList.filter(r => r.etatRecl === 'EN_COURS').length;
+    const resolues = this.reclamationsList.filter(r => r.etatRecl === 'TRAITEE').length;
+    const enAttente = this.reclamationsList.filter(r => r.etatRecl === 'EN_ATTENTE').length;
+
+    this.agentStats = {
+      ...this.agentStats,
+      totalReclamations: total,
+      reclamationsEnCours: enCours, // En cours
+      reclamationsResolues: resolues,
+      reclamationsEnAttente: enAttente, // En attente
+    };
   }
 
   toggleDropdown() {
@@ -416,16 +490,134 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isPhotoModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isPhotoModalOpen || this.isReclamationsModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
 
+  // Méthodes pour le modal des réclamations agent
+  openReclamationsModal() {
+    this.isReclamationsModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    this.loadAllReclamationsForModal();
+    console.log("Modal réclamations agent ouvert");
+  }
+
+  closeReclamationsModal() {
+    this.isReclamationsModalOpen = false;
+    document.body.style.overflow = 'auto';
+    // Réinitialiser les filtres
+    this.filterIdRecl = '';
+    this.filterEtatRecl = '';
+    this.filterEmailClient = '';
+    console.log("Modal réclamations agent fermé");
+  }
+
+  loadAllReclamationsForModal() {
+    this.isLoadingReclamations = true;
+    console.log("📋 Chargement de toutes les réclamations pour l'agent...");
+
+    this.gestionReclamationService.getAllReclamations().subscribe({
+      next: (response: any) => {
+        console.log("✅ Réclamations chargées pour le modal agent:", response);
+        this.reclamationsList = response || [];
+        this.applyReclamationsFilters();
+        this.isLoadingReclamations = false;
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des réclamations:", error);
+        this.isLoadingReclamations = false;
+        this.reclamationsList = [];
+        this.filteredReclamationsList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des réclamations';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les permissions pour voir les réclamations.';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  applyReclamationsFilters() {
+    this.filteredReclamationsList = this.reclamationsList.filter(reclamation => {
+      const matchId = !this.filterIdRecl || reclamation.idRecl.toString().includes(this.filterIdRecl);
+      const matchEtat = !this.filterEtatRecl || reclamation.etatRecl === this.filterEtatRecl;
+      const matchEmail = !this.filterEmailClient || 
+        (reclamation.utilisateurRecl?.emailUser && 
+         reclamation.utilisateurRecl.emailUser.toLowerCase().includes(this.filterEmailClient.toLowerCase()));
+      
+      return matchId && matchEtat && matchEmail;
+    });
+    
+    console.log("🔍 Filtres appliqués sur les réclamations agent:", {
+      total: this.reclamationsList.length,
+      filtered: this.filteredReclamationsList.length,
+      filters: {
+        id: this.filterIdRecl,
+        etat: this.filterEtatRecl,
+        email: this.filterEmailClient
+      }
+    });
+  }
+
+  onReclamationsFilterChange() {
+    this.applyReclamationsFilters();
+  }
+
+  clearReclamationsFilters() {
+    this.filterIdRecl = '';
+    this.filterEtatRecl = '';
+    this.filterEmailClient = '';
+    this.applyReclamationsFilters();
+  }
+
+  getEtatReclLabel(etat: string): string {
+    const option = this.etatReclOptions.find(opt => opt.value === etat);
+    return option ? option.label : etat;
+  }
+
+  getEtatReclClass(etat: string): string {
+    switch (etat) {
+      case 'EN_ATTENTE': return 'status-pending';
+      case 'EN_COURS': return 'status-in-progress';
+      case 'TRAITEE': return 'status-resolved';
+      case 'REJETEE': return 'status-closed';
+      default: return 'status-unknown';
+    }
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'Non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getTypeReclLabel(type: string): string {
+    const typeLabels: { [key: string]: string } = {
+      'Mon_compte_MY_TT': 'Mon compte MY TT',
+      'Mon_Mobile': 'Mon Mobile',
+      'Internet_Mobile': 'Internet Mobile',
+      'Mon_Fixe': 'Mon Fixe',
+      'Service_e_Facture': 'Service e-Facture'
+    };
+    return typeLabels[type] || type;
+  }
+
   // Méthodes de navigation agent
   navigateToReclamations() {
-    console.log("Navigation vers gestion réclamations");
+    console.log("Ouverture du modal des réclamations agent");
+    this.openReclamationsModal();
     this.closeMobileMenu();
-    // Implémenter la navigation
   }
 
   navigateToRenseignements() {
@@ -448,8 +640,14 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
   // Méthodes pour la gestion des réclamations
   viewReclamation(reclamation: any) {
-    console.log("Consulter réclamation:", reclamation);
-    // Implémenter l'affichage détaillé de la réclamation
+    console.log("Consultation de la réclamation:", reclamation);
+    // Pré-remplir le filtre avec l'ID de la réclamation sélectionnée
+    this.filterIdRecl = reclamation.id.toString();
+    // Réinitialiser les autres filtres
+    this.filterEtatRecl = '';
+    this.filterEmailClient = '';
+    // Ouvrir le modal
+    this.openReclamationsModal();
   }
 
   respondToReclamation(reclamation: any) {
@@ -471,10 +669,20 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   // Méthodes utilitaires
   getStatusColor(status: string): string {
     switch (status.toLowerCase()) {
-      case 'nouveau': return '#17a2b8';
-      case 'en cours': return '#ffc107';
-      case 'résolu': return '#28a745';
-      default: return '#6c757d';
+      case 'rejetée':
+      case 'rejetee': 
+        return '#dc3545'; // Rouge
+      case 'traitée':
+      case 'traitee':
+      case 'résolu': 
+        return '#28a745'; // Vert
+      case 'en cours': 
+        return '#007bff'; // Bleu
+      case 'en attente':
+      case 'nouveau': 
+        return '#fd7e14'; // Orange
+      default: 
+        return '#fd7e14'; // Orange par défaut
     }
   }
 
