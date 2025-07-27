@@ -2165,6 +2165,198 @@
     gap: 0.75rem;
     text-align: center;
   }
+}
+
+/* Styles pour le modal de réponse aux réclamations */
+.response-modal {
+  max-width: 800px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.reclamation-info-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #28a745;
+}
+
+.info-title {
+  color: #1e7e34;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reclamation-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #20c997;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #155724;
+}
+
+.reclamation-description {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.description-text {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.response-form-section {
+  margin-bottom: 1.5rem;
+}
+
+.form-title {
+  color: #17a2b8;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.3s ease;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.form-textarea.error {
+  border-color: #dc3545;
+}
+
+.form-textarea.error:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.form-help {
+  margin-top: 0.5rem;
+}
+
+.form-help small {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.error-message {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8d7da;
+  border: 1px solid #f1aeb5;
+  border-radius: 6px;
+  color: #721c24;
+  font-size: 0.85rem;
+}
+
+.info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.note-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.note-text {
+  color: #0c5460;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.note-text strong {
+  font-weight: 700;
+}
+
+/* Responsive pour le modal de réponse */
+@media (max-width: 768px) {
+  .response-modal {
+    width: 95%;
+    margin: 1rem;
+    max-height: 95vh;
+  }
+  
+  .reclamation-details {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .form-textarea {
+    min-height: 100px;
+  }
+  
+  .info-note {
+    flex-direction: column;
+    text-align: center;
+  }
+}
   
   .date-item {
     flex-direction: column;
@@ -2187,7 +2379,7 @@
     font-size: 0.8rem;
     padding: 0.2rem 0.6rem;
   }
-}
+
 
 @media (max-width: 480px) {
   .reclamations-agent-modal {
@@ -2218,5 +2410,196 @@
   
   .client-value {
     font-size: 0.9rem;
+  }
+}
+
+/* Styles pour le modal de réponse aux réclamations */
+.response-modal {
+  max-width: 800px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.reclamation-info-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #28a745;
+}
+
+.info-title {
+  color: #1e7e34;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reclamation-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #20c997;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #155724;
+}
+
+.reclamation-description {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.description-text {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.response-form-section {
+  margin-bottom: 1.5rem;
+}
+
+.form-title {
+  color: #17a2b8;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.3s ease;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.form-textarea.error {
+  border-color: #dc3545;
+}
+
+.form-textarea.error:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.form-help {
+  margin-top: 0.5rem;
+}
+
+.form-help small {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.error-message {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8d7da;
+  border: 1px solid #f1aeb5;
+  border-radius: 6px;
+  color: #721c24;
+  font-size: 0.85rem;
+}
+
+.info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.note-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.note-text {
+  color: #0c5460;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.note-text strong {
+  font-weight: 700;
+}
+
+/* Responsive pour le modal de réponse */
+@media (max-width: 768px) {
+  .response-modal {
+    width: 95%;
+    margin: 1rem;
+    max-height: 95vh;
+  }
+  
+  .reclamation-details {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .form-textarea {
+    min-height: 100px;
+  }
+  
+  .info-note {
+    flex-direction: column;
+    text-align: center;
   }
 }

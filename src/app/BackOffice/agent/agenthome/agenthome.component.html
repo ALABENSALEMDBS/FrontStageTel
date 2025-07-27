@@ -737,4 +737,98 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal pour répondre aux réclamations -->
+  <div class="modal-overlay" [class.show]="isResponseModalOpen" (click)="closeResponseModal()">
+    <div class="modal-content response-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">💬 Répondre à la réclamation</h3>
+        <button class="modal-close" (click)="closeResponseModal()">×</button>
+      </div>
+      
+      <div class="modal-body" *ngIf="selectedReclamationForResponse">
+        <!-- Informations de la réclamation -->
+        <div class="reclamation-info-section">
+          <h4 class="info-title">📋 Informations de la réclamation</h4>
+          <div class="reclamation-details">
+            <div class="detail-item">
+              <span class="detail-label">ID :</span>
+              <span class="detail-value">#{{ selectedReclamationForResponse.idRecl || selectedReclamationForResponse.id }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Client :</span>
+              <span class="detail-value">
+                {{ selectedReclamationForResponse.utilisateurRecl ? 
+                   (selectedReclamationForResponse.utilisateurRecl.prenomUser + ' ' + selectedReclamationForResponse.utilisateurRecl.nomUser) : 
+                   selectedReclamationForResponse.client }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Type :</span>
+              <span class="detail-value">{{ selectedReclamationForResponse.type || getTypeReclLabel(selectedReclamationForResponse.typeRecl) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">État :</span>
+              <span class="detail-value status-badge" [class]="getEtatReclClass(selectedReclamationForResponse.etatRecl)">
+                {{ selectedReclamationForResponse.statut || getEtatReclLabel(selectedReclamationForResponse.etatRecl) }}
+              </span>
+            </div>
+          </div>
+          <div class="reclamation-description">
+            <span class="detail-label">Description :</span>
+            <p class="description-text">{{ selectedReclamationForResponse.description || selectedReclamationForResponse.descriptionRecl }}</p>
+          </div>
+        </div>
+
+        <!-- Formulaire de réponse -->
+        <div class="response-form-section">
+          <h4 class="form-title">✍️ Votre réponse</h4>
+          <form [formGroup]="responseForm" (ngSubmit)="onSubmitResponse()">
+            <div class="form-group">
+              <label for="descriptionReponRecl" class="form-label">Réponse à la réclamation *</label>
+              <textarea 
+                id="descriptionReponRecl" 
+                formControlName="descriptionReponRecl"
+                placeholder="Rédigez votre réponse détaillée à cette réclamation..."
+                class="form-textarea"
+                rows="6"
+                [class.error]="responseForm.get('descriptionReponRecl')?.invalid && responseForm.get('descriptionReponRecl')?.touched"
+              ></textarea>
+              <div class="form-help">
+                <small>Minimum 10 caractères requis pour une réponse complète</small>
+              </div>
+              <div class="error-message" *ngIf="responseForm.get('descriptionReponRecl')?.invalid && responseForm.get('descriptionReponRecl')?.touched">
+                <span *ngIf="responseForm.get('descriptionReponRecl')?.errors?.['required']">La réponse est obligatoire</span>
+                <span *ngIf="responseForm.get('descriptionReponRecl')?.errors?.['minlength']">La réponse doit contenir au moins 10 caractères</span>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Note d'information -->
+        <div class="info-note">
+          <div class="note-icon">ℹ️</div>
+          <div class="note-text">
+            <strong>Note :</strong> Dès l'ouverture de ce formulaire, la réclamation a été automatiquement mise en cours. 
+            Vous pouvez rédiger une réponse pour marquer la réclamation comme traitée.
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeResponseModal()" [disabled]="isSubmittingResponse">
+          Annuler
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="onSubmitResponse()"
+          [disabled]="responseForm.invalid || isSubmittingResponse"
+        >
+          <span *ngIf="isSubmittingResponse">🔄 Envoi...</span>
+          <span *ngIf="!isSubmittingResponse">💬 Envoyer la réponse</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
