@@ -28,12 +28,12 @@
           </button>
           <button class="nav-button" (click)="navigateToReports(); closeMobileMenu()">
             <span class="nav-icon">📊</span>
-            Rapports
+            Rapports Réclamations
           </button>
-          <button class="nav-button" (click)="navigateToSettings(); closeMobileMenu()">
+          <!-- <button class="nav-button" (click)="navigateToSettings(); closeMobileMenu()">
             <span class="nav-icon">🛠️</span>
             Paramètres
-          </button>
+          </button> -->
         </div>
 
         <!-- Mobile user menu -->
@@ -177,14 +177,14 @@
         </div>
         <div class="action-card" (click)="navigateToReports()">
           <div class="action-icon">📊</div>
-          <h3 class="action-title">Rapports</h3>
-          <p class="action-description">Consulter les statistiques et analytics</p>
+          <h3 class="action-title">Rapports Réclamations</h3>
+          <p class="action-description">Consulter les statistiques Réclamation</p>
         </div>
-        <div class="action-card" (click)="navigateToSettings()">
+        <!-- <div class="action-card" (click)="navigateToSettings()">
           <div class="action-icon">🛠️</div>
           <h3 class="action-title">Paramètres</h3>
           <p class="action-description">Configuration système et préférences</p>
-        </div>
+        </div> -->
       </div>
     </section>
 
@@ -672,6 +672,219 @@
     
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeReclamationsModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour les statistiques des réclamations -->
+<div class="modal-overlay" [class.show]="isStatsModalOpen" (click)="closeStatsModal()">
+  <div class="modal-content stats-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">📊 Statistiques des Réclamations</h3>
+      <button class="modal-close" (click)="closeStatsModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Loading -->
+      <div class="loading-section" *ngIf="isLoadingStats">
+        <div class="loading-spinner"></div>
+        <p>Chargement des statistiques...</p>
+      </div>
+      
+      <!-- Contenu des statistiques -->
+      <div class="stats-content" *ngIf="!isLoadingStats">
+        
+        <!-- Vue d'ensemble globale -->
+        <div class="stats-section overview-section">
+          <h4 class="stats-section-title">
+            <span class="section-icon">📈</span>
+            Vue d'ensemble globale
+          </h4>
+          <div class="stats-cards-grid">
+            <div class="stat-card total">
+              <div class="stat-icon">📋</div>
+              <div class="stat-content">
+                <div class="stat-number">{{ statsData.totalReclamations }}</div>
+                <div class="stat-label">Total Réclamations</div>
+              </div>
+            </div>
+            <div class="stat-card pending">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-content">
+                <div class="stat-number">{{ statsData.enAttente }}</div>
+                <div class="stat-label">En Attente</div>
+                <div class="stat-percentage">{{ statsData.totalReclamations > 0 ? ((statsData.enAttente / statsData.totalReclamations) * 100).toFixed(1) : 0 }}%</div>
+              </div>
+            </div>
+            <div class="stat-card progress">
+              <div class="stat-icon">🔄</div>
+              <div class="stat-content">
+                <div class="stat-number">{{ statsData.enCours }}</div>
+                <div class="stat-label">En Cours</div>
+                <div class="stat-percentage">{{ statsData.totalReclamations > 0 ? ((statsData.enCours / statsData.totalReclamations) * 100).toFixed(1) : 0 }}%</div>
+              </div>
+            </div>
+            <div class="stat-card resolved">
+              <div class="stat-icon">✅</div>
+              <div class="stat-content">
+                <div class="stat-number">{{ statsData.traitees }}</div>
+                <div class="stat-label">Traitées</div>
+                <div class="stat-percentage">{{ statsData.totalReclamations > 0 ? ((statsData.traitees / statsData.totalReclamations) * 100).toFixed(1) : 0 }}%</div>
+              </div>
+            </div>
+            <div class="stat-card rejected">
+              <div class="stat-icon">❌</div>
+              <div class="stat-content">
+                <div class="stat-number">{{ statsData.rejetees }}</div>
+                <div class="stat-label">Rejetées</div>
+                <div class="stat-percentage">{{ statsData.totalReclamations > 0 ? ((statsData.rejetees / statsData.totalReclamations) * 100).toFixed(1) : 0 }}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques par client -->
+        <div class="stats-section clients-section">
+          <h4 class="stats-section-title">
+            <span class="section-icon">👥</span>
+            Top 10 Clients par nombre de réclamations
+          </h4>
+          <div class="clients-stats-table" *ngIf="statsData.parClient.length > 0">
+            <div class="table-header">
+              <div class="header-cell">Client</div>
+              <div class="header-cell">Email</div>
+              <div class="header-cell">Total</div>
+              <div class="header-cell">En Attente</div>
+              <div class="header-cell">En Cours</div>
+              <div class="header-cell">Traitées</div>
+              <div class="header-cell">Rejetées</div>
+            </div>
+            <div class="table-row" *ngFor="let client of statsData.parClient; let i = index">
+              <div class="cell client-name">
+                <span class="rank">#{{ i + 1 }}</span>
+                {{ client.nom }}
+              </div>
+              <div class="cell client-email">{{ client.email }}</div>
+              <div class="cell total-count">{{ client.total }}</div>
+              <div class="cell pending-count">{{ client.enAttente }}</div>
+              <div class="cell progress-count">{{ client.enCours }}</div>
+              <div class="cell resolved-count">{{ client.traitees }}</div>
+              <div class="cell rejected-count">{{ client.rejetees }}</div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="statsData.parClient.length === 0">
+            <div class="no-data-icon">📭</div>
+            <p>Aucune donnée client disponible</p>
+          </div>
+        </div>
+
+        <!-- Statistiques par type -->
+        <div class="stats-section types-section">
+          <h4 class="stats-section-title">
+            <span class="section-icon">🏷️</span>
+            Répartition par type de réclamation
+          </h4>
+          <div class="types-stats-grid" *ngIf="statsData.parType.length > 0">
+            <div class="type-card" *ngFor="let type of statsData.parType">
+              <div class="type-header">
+                <div class="type-name">{{ type.type }}</div>
+                <div class="type-total">{{ type.total }} réclamations</div>
+              </div>
+              <div class="type-breakdown">
+                <div class="breakdown-item pending">
+                  <span class="breakdown-label">En Attente:</span>
+                  <span class="breakdown-value">{{ type.enAttente }}</span>
+                </div>
+                <div class="breakdown-item progress">
+                  <span class="breakdown-label">En Cours:</span>
+                  <span class="breakdown-value">{{ type.enCours }}</span>
+                </div>
+                <div class="breakdown-item resolved">
+                  <span class="breakdown-label">Traitées:</span>
+                  <span class="breakdown-value">{{ type.traitees }}</span>
+                </div>
+                <div class="breakdown-item rejected">
+                  <span class="breakdown-label">Rejetées:</span>
+                  <span class="breakdown-value">{{ type.rejetees }}</span>
+                </div>
+              </div>
+              <div class="type-progress-bar">
+                <div class="progress-segment pending" [style.width.%]="type.total > 0 ? (type.enAttente / type.total) * 100 : 0"></div>
+                <div class="progress-segment progress" [style.width.%]="type.total > 0 ? (type.enCours / type.total) * 100 : 0"></div>
+                <div class="progress-segment resolved" [style.width.%]="type.total > 0 ? (type.traitees / type.total) * 100 : 0"></div>
+                <div class="progress-segment rejected" [style.width.%]="type.total > 0 ? (type.rejetees / type.total) * 100 : 0"></div>
+              </div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="statsData.parType.length === 0">
+            <div class="no-data-icon">📭</div>
+            <p>Aucune donnée de type disponible</p>
+          </div>
+        </div>
+
+        <!-- Évolution mensuelle -->
+        <div class="stats-section evolution-section">
+          <h4 class="stats-section-title">
+            <span class="section-icon">📅</span>
+            Évolution des 6 derniers mois
+          </h4>
+          <div class="evolution-chart" *ngIf="statsData.evolutionMensuelle.length > 0">
+            <div class="chart-container">
+              <div class="chart-bar" *ngFor="let month of statsData.evolutionMensuelle">
+                <div class="bar-container">
+                  <div class="bar-segments">
+                    <div class="bar-segment pending" 
+                         [style.height.%]="month.total > 0 ? (month.enAttente / month.total) * 100 : 0"
+                         [title]="'En Attente: ' + month.enAttente"></div>
+                    <div class="bar-segment progress" 
+                         [style.height.%]="month.total > 0 ? (month.enCours / month.total) * 100 : 0"
+                         [title]="'En Cours: ' + month.enCours"></div>
+                    <div class="bar-segment resolved" 
+                         [style.height.%]="month.total > 0 ? (month.traitees / month.total) * 100 : 0"
+                         [title]="'Traitées: ' + month.traitees"></div>
+                    <div class="bar-segment rejected" 
+                         [style.height.%]="month.total > 0 ? (month.rejetees / month.total) * 100 : 0"
+                         [title]="'Rejetées: ' + month.rejetees"></div>
+                  </div>
+                  <div class="bar-total">{{ month.total }}</div>
+                </div>
+                <div class="bar-label">{{ month.mois }}</div>
+              </div>
+            </div>
+            
+            <!-- Légende -->
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-color pending"></div>
+                <span>En Attente</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color progress"></div>
+                <span>En Cours</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color resolved"></div>
+                <span>Traitées</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color rejected"></div>
+                <span>Rejetées</span>
+              </div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="statsData.evolutionMensuelle.length === 0">
+            <div class="no-data-icon">📭</div>
+            <p>Aucune donnée d'évolution disponible</p>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeStatsModal()">
         Fermer
       </button>
     </div>

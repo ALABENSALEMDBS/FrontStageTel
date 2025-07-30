@@ -51,6 +51,20 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   filterEtatRecl = '';
   filterEmailClient = '';
   
+  // Variables pour le modal de statistiques
+  isStatsModalOpen = false;
+  statsData: any = {
+    totalReclamations: 0,
+    enAttente: 0,
+    enCours: 0,
+    traitees: 0,
+    rejetees: 0,
+    parClient: [],
+    parType: [],
+    evolutionMensuelle: []
+  };
+  isLoadingStats = false;
+  
   // Options pour les filtres des réclamations
   etatReclOptions = [
     { value: '', label: 'Tous les états' },
@@ -456,14 +470,13 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   }
 
   navigateToReports() {
-    console.log("Navigation vers rapports");
-    // Implémenter la navigation
+    this.openStatsModal();
   }
 
-  navigateToSettings() {
-    console.log("Navigation vers paramètres");
-    // Implémenter la navigation
-  }
+  // navigateToSettings() {
+  //   console.log("Navigation vers paramètres");
+  //   // Implémenter la navigation
+  // }
 
   // Méthodes pour le modal des réclamations
   openReclamationsModal() {
@@ -581,6 +594,134 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
       'Service_e_Facture': 'Service e-Facture'
     };
     return typeLabels[type] || type;
+  }
+
+  // Méthodes pour le modal de statistiques
+  openStatsModal() {
+    this.isStatsModalOpen = true;
+    this.loadStatistics();
+  }
+
+  closeStatsModal() {
+    this.isStatsModalOpen = false;
+  }
+
+  loadStatistics() {
+    this.isLoadingStats = true;
+    
+    this.gestionReclamationService.getAllReclamations().subscribe({
+      next: (reclamations) => {
+        this.calculateStatistics(reclamations);
+        this.isLoadingStats = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des statistiques:', error);
+        this.notificationService.showError('Erreur lors du chargement des statistiques');
+        this.isLoadingStats = false;
+      }
+    });
+  }
+
+  calculateStatistics(reclamations: any[]) {
+    // Statistiques globales
+    this.statsData.totalReclamations = reclamations.length;
+    this.statsData.enAttente = reclamations.filter(r => r.etatRecl === 'EN_ATTENTE').length;
+    this.statsData.enCours = reclamations.filter(r => r.etatRecl === 'EN_COURS').length;
+    this.statsData.traitees = reclamations.filter(r => r.etatRecl === 'TRAITEE').length;
+    this.statsData.rejetees = reclamations.filter(r => r.etatRecl === 'REJETEE').length;
+
+    // Statistiques par client
+    const clientStats = new Map();
+    reclamations.forEach(reclamation => {
+      if (reclamation.utilisateurRecl) {
+        const clientKey = `${reclamation.utilisateurRecl.prenomUser} ${reclamation.utilisateurRecl.nomUser}`;
+        const clientEmail = reclamation.utilisateurRecl.emailUser;
+        
+        if (!clientStats.has(clientKey)) {
+          clientStats.set(clientKey, {
+            nom: clientKey,
+            email: clientEmail,
+            total: 0,
+            enAttente: 0,
+            enCours: 0,
+            traitees: 0,
+            rejetees: 0
+          });
+        }
+        
+        const client = clientStats.get(clientKey);
+        client.total++;
+        
+        switch (reclamation.etatRecl) {
+          case 'EN_ATTENTE': client.enAttente++; break;
+          case 'EN_COURS': client.enCours++; break;
+          case 'TRAITEE': client.traitees++; break;
+          case 'REJETEE': client.rejetees++; break;
+        }
+      }
+    });
+    
+    this.statsData.parClient = Array.from(clientStats.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10); // Top 10 clients
+
+    // Statistiques par type
+    const typeStats = new Map();
+    reclamations.forEach(reclamation => {
+      const typeKey = reclamation.typeRecl;
+      
+      if (!typeStats.has(typeKey)) {
+        typeStats.set(typeKey, {
+          type: this.getTypeReclLabel(typeKey),
+          total: 0,
+          enAttente: 0,
+          enCours: 0,
+          traitees: 0,
+          rejetees: 0
+        });
+      }
+      
+      const type = typeStats.get(typeKey);
+      type.total++;
+      
+      switch (reclamation.etatRecl) {
+        case 'EN_ATTENTE': type.enAttente++; break;
+        case 'EN_COURS': type.enCours++; break;
+        case 'TRAITEE': type.traitees++; break;
+        case 'REJETEE': type.rejetees++; break;
+      }
+    });
+    
+    this.statsData.parType = Array.from(typeStats.values())
+      .sort((a, b) => b.total - a.total);
+
+    // Évolution mensuelle (derniers 6 mois)
+    const now = new Date();
+    const evolutionData = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      
+      const monthReclamations = reclamations.filter(r => {
+        const reclDate = new Date(r.dateRecl);
+        return reclDate.getMonth() === date.getMonth() && 
+               reclDate.getFullYear() === date.getFullYear();
+      });
+      
+      evolutionData.push({
+        mois: monthKey,
+        total: monthReclamations.length,
+        enAttente: monthReclamations.filter(r => r.etatRecl === 'EN_ATTENTE').length,
+        enCours: monthReclamations.filter(r => r.etatRecl === 'EN_COURS').length,
+        traitees: monthReclamations.filter(r => r.etatRecl === 'TRAITEE').length,
+        rejetees: monthReclamations.filter(r => r.etatRecl === 'REJETEE').length
+      });
+    }
+    
+    this.statsData.evolutionMensuelle = evolutionData;
+
+    console.log('📊 Statistiques calculées:', this.statsData);
   }
 
 }
