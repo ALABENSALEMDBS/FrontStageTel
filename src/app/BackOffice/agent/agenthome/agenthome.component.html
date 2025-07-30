@@ -30,10 +30,10 @@
             <span class="nav-icon">📊</span>
             Rapports Réclamations
           </button>
-          <button class="nav-button" (click)="navigateToSettings()">
+          <!-- <button class="nav-button" (click)="navigateToSettings()">
             <span class="nav-icon">⚙️</span>
             Paramètres
-          </button>
+          </button> -->
         </div>
 
         <!-- Mobile user menu -->
@@ -178,11 +178,11 @@
           <h3 class="action-title">Rapports Réclamations</h3>
           <p class="action-description">Consulter les statistiques Réclamations</p>
         </div>
-        <div class="action-card" (click)="navigateToSettings()">
+        <!-- <div class="action-card" (click)="navigateToSettings()">
           <div class="action-icon">⚙️</div>
           <h3 class="action-title">Paramètres</h3>
           <p class="action-description">Configuration et préférences</p>
-        </div>
+        </div> -->
       </div>
     </section>
 
@@ -261,6 +261,10 @@
                   <span class="btn-icon">💬</span>
                   Répondre
                 </button>
+
+            
+
+
               </div>
             </div>
           </div>
@@ -723,6 +727,16 @@
                     <span class="btn-icon">💬</span>
                     Répondre
                   </button>
+
+                  <button 
+            class="action-button delete-button" 
+            (click)="confirmRejeteeReclamation(reclamation)" [disabled]="reclamation.etatRecl === 'REJETEE' || reclamation.etatRecl === 'TRAITEE'"
+            title="Rejeter définitivement ce réclamation"
+          >
+            <span class="btn-icon">🗑️</span>
+            <span class="btn-text">Rejeter</span>
+          </button>
+
                 </div>
               </div>
             </div>
@@ -1048,6 +1062,51 @@
           Fermer
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal-overlay" [class.show]="isRejeterModalOpen" (click)="closeRejeterModal()">
+  <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">⚠️ Confirmer le rejet d'une réclamation</h3>
+      <button class="modal-close" (click)="closeRejeterModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="idReclamationToDelete">
+      <div class="delete-warning">
+        <div class="warning-icon">
+          <span>🚨</span>
+        </div>
+        <div class="warning-content">
+          <h4 class="warning-title">Rejeter définitive</h4>
+          <p class="warning-message">
+            Êtes-vous sûr de vouloir rejeter définitivement la réclamation
+            <strong> # {{ idReclamationToDelete }}</strong> ?
+          </p>
+          <div class="warning-details">
+            <p><strong>⚠️ Cette action est irréversible !</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeRejeterModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-danger delete-confirm-btn" 
+        (click)="confirmFinalRejeter()"
+        [disabled]="isRejetee"
+      >
+        <span *ngIf="isRejetee">🔄 Réjetée...</span>
+        <span *ngIf="!isRejetee">🗑️ Réjeter définitivement</span>
+      </button>
     </div>
   </div>
 </div>

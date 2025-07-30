@@ -39,6 +39,11 @@ export class GestionreclamationService {
     return this.http.put<Reclamation>(`${this.baseUrl}/en-cours/${idReclamation}`, {});
   }
 
+  // ✅ Mettre une réclamation en cours
+  mettreRejetee(idReclamation: number): Observable<Reclamation> {
+    return this.http.put<Reclamation>(`${this.baseUrl}/rejetee/${idReclamation}`, {});
+  }
+
   // ✅ Répondre à une réclamation
   repondreReclamation(idReclamation: number, reclamation: Reclamation): Observable<Reclamation> {
     return this.http.put<Reclamation>(`${this.baseUrl}/repondre/${idReclamation}`, reclamation);

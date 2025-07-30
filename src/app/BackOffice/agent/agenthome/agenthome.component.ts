@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModu
 import { Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
+import { Reclamation } from '../../../../core/models/Reclamation';
 import { GestionreclamationService } from '../../../services/gestionReclamationService/gestionreclamation.service';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -68,6 +69,11 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     evolutionMensuelle: []
   };
   isLoadingAgentStats = false;
+  
+  // Variables pour le modal de rejet des réclamations
+  isRejeterModalOpen = false;
+  isRejetee = false;
+  idReclamationToDelete: number | null = null;
   
   // Options pour les filtres des réclamations agent
   etatReclOptions = [
@@ -655,11 +661,11 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     this.openAgentStatsModal();
   }
 
-  navigateToSettings() {
-    console.log("Navigation vers paramètres");
-    this.closeMobileMenu();
-    // Implémenter la navigation
-  }
+  // navigateToSettings() {
+  //   console.log("Navigation vers paramètres");
+  //   this.closeMobileMenu();
+  //   // Implémenter la navigation
+  // }
 
   // Méthodes pour la gestion des réclamations
   viewReclamation(reclamation: any) {
@@ -749,6 +755,82 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+
+
+// ========== MÉTHODES DE SUPPRESSION =========
+
+  /**
+   * Ouvre le modal de confirmation pour rejeter une réclamation
+   */
+  confirmRejeteeReclamation(reclamation: Reclamation): void {
+    console.log('🚫 Ouverture du modal de rejet pour la réclamation:', reclamation.idRecl);
+    this.idReclamationToDelete = reclamation.idRecl;
+    this.isRejeterModalOpen = true;
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+  }
+
+  /**
+   * Ferme le modal de confirmation de rejet
+   */
+  closeRejeterModal(): void {
+    this.isRejeterModalOpen = false;
+    this.idReclamationToDelete = null;
+    this.isRejetee = false;
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log('🔒 Modal de rejet fermé');
+  }
+
+  confirmFinalRejeter(): void {
+    if (this.idReclamationToDelete) {
+      this.isRejetee = true;
+      console.log('🚫 Rejet de la réclamation en cours:', this.idReclamationToDelete);
+      
+      this.gestionReclamationService.mettreRejetee(this.idReclamationToDelete).subscribe({
+        next: (response) => {
+          console.log('✅ Réclamation rejetée avec succès:', response);
+          
+          // Mettre à jour l'état de la réclamation dans la liste au lieu de la supprimer
+          const index = this.reclamationsList.findIndex(r => r.idRecl === this.idReclamationToDelete);
+          if (index !== -1) {
+            this.reclamationsList[index].etatRecl = 'REJETEE';
+            // Mettre à jour la date de rejet si elle est fournie
+            if (response && response.dateReponRecl) {
+              this.reclamationsList[index].dateReponRecl = response.dateReponRecl;
+            }
+            // Mettre à jour aussi d'autres propriétés si elles existent dans la réponse
+            if (response && typeof response === 'object') {
+              this.reclamationsList[index] = { ...this.reclamationsList[index], ...response };
+            }
+          }
+          
+          // Appliquer les filtres pour mettre à jour la vue
+          this.applyReclamationsFilters();
+          
+          // Mettre à jour les statistiques du tableau de bord
+          this.updateStatsFromRealData();
+          
+          // Afficher le message de succès
+          this.notificationService.showSuccess('Réclamation rejetée avec succès');
+          
+          // Fermer le modal
+          this.closeRejeterModal();
+          
+          console.log('📊 Liste des réclamations mise à jour après rejet');
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors du rejet de la réclamation:', error);
+          this.notificationService.showError('Erreur lors du rejet de la réclamation');
+          this.isRejetee = false;
+        }
+      });
+    } else {
+      this.closeRejeterModal();
+    }
+  }
+
 
   // Méthodes pour la gestion des renseignements
   viewRenseignement(renseignement: any) {
