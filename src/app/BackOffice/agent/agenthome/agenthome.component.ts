@@ -56,6 +56,19 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   responseForm: FormGroup;
   isSubmittingResponse = false;
   
+  // Variables pour le modal de statistiques agent
+  isAgentStatsModalOpen = false;
+  agentStatsData: any = {
+    totalReclamations: 0,
+    enAttente: 0,
+    enCours: 0,
+    traitees: 0,
+    rejetees: 0,
+    parType: [],
+    evolutionMensuelle: []
+  };
+  isLoadingAgentStats = false;
+  
   // Options pour les filtres des réclamations agent
   etatReclOptions = [
     { value: '', label: 'Tous les états' },
@@ -638,9 +651,8 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   }
 
   navigateToReports() {
-    console.log("Navigation vers rapports");
     this.closeMobileMenu();
-    // Implémenter la navigation
+    this.openAgentStatsModal();
   }
 
   navigateToSettings() {
@@ -777,4 +789,143 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
       default: return '#6c757d';
     }
   }
+
+  // Méthodes pour le modal de statistiques agent
+  openAgentStatsModal() {
+    this.isAgentStatsModalOpen = true;
+    this.loadAgentStatistics();
+  }
+
+  closeAgentStatsModal() {
+    this.isAgentStatsModalOpen = false;
+  }
+
+  loadAgentStatistics() {
+    this.isLoadingAgentStats = true;
+    
+    this.gestionReclamationService.getAllReclamations().subscribe({
+      next: (reclamations) => {
+        this.calculateAgentStatistics(reclamations);
+        this.isLoadingAgentStats = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des statistiques agent:', error);
+        this.notificationService.showError('Erreur lors du chargement des statistiques');
+        this.isLoadingAgentStats = false;
+      }
+    });
+  }
+
+  calculateAgentStatistics(reclamations: any[]) {
+    // Statistiques globales
+    this.agentStatsData.totalReclamations = reclamations.length;
+    this.agentStatsData.enAttente = reclamations.filter(r => r.etatRecl === 'EN_ATTENTE').length;
+    this.agentStatsData.enCours = reclamations.filter(r => r.etatRecl === 'EN_COURS').length;
+    this.agentStatsData.traitees = reclamations.filter(r => r.etatRecl === 'TRAITEE').length;
+    this.agentStatsData.rejetees = reclamations.filter(r => r.etatRecl === 'REJETEE').length;
+
+    // Statistiques par type
+    const typeStats = new Map();
+    reclamations.forEach(reclamation => {
+      const typeKey = reclamation.typeRecl;
+      
+      if (!typeStats.has(typeKey)) {
+        typeStats.set(typeKey, {
+          type: this.getTypeReclLabel(typeKey),
+          total: 0,
+          enAttente: 0,
+          enCours: 0,
+          traitees: 0,
+          rejetees: 0
+        });
+      }
+      
+      const type = typeStats.get(typeKey);
+      type.total++;
+      
+      switch (reclamation.etatRecl) {
+        case 'EN_ATTENTE': type.enAttente++; break;
+        case 'EN_COURS': type.enCours++; break;
+        case 'TRAITEE': type.traitees++; break;
+        case 'REJETEE': type.rejetees++; break;
+      }
+    });
+    
+    this.agentStatsData.parType = Array.from(typeStats.values())
+      .sort((a, b) => b.total - a.total);
+
+    // Évolution mensuelle (derniers 6 mois)
+    const now = new Date();
+    const evolutionData = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      
+      const monthReclamations = reclamations.filter(r => {
+        const reclDate = new Date(r.dateRecl);
+        return reclDate.getMonth() === date.getMonth() && 
+               reclDate.getFullYear() === date.getFullYear();
+      });
+      
+      evolutionData.push({
+        mois: monthKey,
+        total: monthReclamations.length,
+        enAttente: monthReclamations.filter(r => r.etatRecl === 'EN_ATTENTE').length,
+        enCours: monthReclamations.filter(r => r.etatRecl === 'EN_COURS').length,
+        traitees: monthReclamations.filter(r => r.etatRecl === 'TRAITEE').length,
+        rejetees: monthReclamations.filter(r => r.etatRecl === 'REJETEE').length
+      });
+    }
+    
+    this.agentStatsData.evolutionMensuelle = evolutionData;
+
+    console.log('📊 Statistiques agent calculées:', this.agentStatsData);
+  }
+
+  // Méthode pour générer le gradient du graphique circulaire
+  getPieChartGradient(): string {
+    const total = this.agentStatsData.totalReclamations;
+    if (total === 0) return 'conic-gradient(#e9ecef 0deg 360deg)';
+
+    const enAttente = this.agentStatsData.enAttente;
+    const enCours = this.agentStatsData.enCours;
+    const traitees = this.agentStatsData.traitees;
+    const rejetees = this.agentStatsData.rejetees;
+
+    // Calculer les angles pour chaque segment
+    const enAttenteAngle = (enAttente / total) * 360;
+    const enCoursAngle = enAttenteAngle + (enCours / total) * 360;
+    const traiteesAngle = enCoursAngle + (traitees / total) * 360;
+    const rejeteesAngle = traiteesAngle + (rejetees / total) * 360;
+
+    let gradient = 'conic-gradient(';
+    let currentAngle = 0;
+
+    if (enAttente > 0) {
+      gradient += `#ffc107 ${currentAngle}deg ${enAttenteAngle}deg`;
+      currentAngle = enAttenteAngle;
+      if (currentAngle < 360) gradient += ', ';
+    }
+
+    if (enCours > 0) {
+      gradient += `#17a2b8 ${currentAngle}deg ${enCoursAngle}deg`;
+      currentAngle = enCoursAngle;
+      if (currentAngle < 360) gradient += ', ';
+    }
+
+    if (traitees > 0) {
+      gradient += `#28a745 ${currentAngle}deg ${traiteesAngle}deg`;
+      currentAngle = traiteesAngle;
+      if (currentAngle < 360) gradient += ', ';
+    }
+
+    if (rejetees > 0) {
+      gradient += `#dc3545 ${currentAngle}deg ${rejeteesAngle}deg`;
+    }
+
+    gradient += ')';
+    return gradient;
+  }
+
 }
