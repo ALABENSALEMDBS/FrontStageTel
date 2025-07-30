@@ -1009,5 +1009,5 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     gradient += ')';
     return gradient;
   }
-
+  
 }
