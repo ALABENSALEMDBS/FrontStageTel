@@ -65,6 +65,18 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   reclamationToDelete: any = null
   isDeletingReclamation = false
   
+  // Variables pour la modification de réclamations
+  isEditReclamationModalOpen = false
+  isEditingReclamation = false
+  reclamationToEdit: any = null
+  editReclamationForm: FormGroup
+  editSelectedCaptureFile: File | null = null
+  editSelectedDocumentFile: File | null = null
+  editCapturePreviewUrl: string | null = null
+  editDocumentPreviewUrl: string | null = null
+  isUploadingEditCapture = false
+  isUploadingEditDocument = false
+  
   // Variables pour les filtres
   filterTypeRecl = ''
   filterEtatRecl = ''
@@ -143,6 +155,12 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
     // Initialiser le formulaire de réclamation
     this.reclamationForm = this.fb.group({
+      typeRecl: ['', [Validators.required]],
+      descriptionRecl: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
+    });
+
+    // Initialiser le formulaire d'édition de réclamation
+    this.editReclamationForm = this.fb.group({
       typeRecl: ['', [Validators.required]],
       descriptionRecl: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
     });
@@ -1424,6 +1442,337 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
         this.notificationService.showError(errorMessage, 5000);
       }
     });
+  }
+
+  // ========== MÉTHODE UTILITAIRE POUR UPLOAD ==========
+
+  /**
+   * Upload un fichier et retourne l'URL
+   */
+  private uploadFile(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.gestionUserService.uploadFile(file).subscribe({
+        next: (response) => {
+          console.log('✅ Upload réussi:', response);
+          // Le service peut retourner différents formats, on essaie de récupérer l'URL
+          let url = '';
+          if (typeof response === 'string') {
+            url = response;
+          } else if (response && response.url) {
+            url = response.url;
+          } else if (response && response.filePath) {
+            url = response.filePath;
+          } else {
+            url = response;
+          }
+          resolve(url);
+        },
+        error: (error) => {
+          console.error('❌ Erreur upload:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  // ========== MÉTHODES DE MODIFICATION DES RÉCLAMATIONS ==========
+
+  /**
+   * Vérifie si une réclamation peut être modifiée (seulement si elle est en attente)
+   */
+  canEditReclamation(reclamation: any): boolean {
+    return reclamation && reclamation.etatRecl === 'EN_ATTENTE';
+  }
+
+  /**
+   * Ouvre le modal de modification d'une réclamation
+   */
+  openEditReclamationModal(reclamation: any) {
+    if (!this.canEditReclamation(reclamation)) {
+      this.notificationService.showError(
+        'Cette réclamation ne peut être modifiée que si elle est en attente.', 
+        4000
+      );
+      return;
+    }
+
+    console.log("✏️ Ouverture du modal de modification pour la réclamation:", reclamation.idRecl);
+    
+    this.reclamationToEdit = { ...reclamation };
+    this.isEditReclamationModalOpen = true;
+    
+    // Pré-remplir le formulaire avec les données existantes
+    this.editReclamationForm.patchValue({
+      typeRecl: reclamation.typeRecl,
+      descriptionRecl: reclamation.descriptionRecl
+    });
+
+    // Réinitialiser les fichiers
+    this.editSelectedCaptureFile = null;
+    this.editSelectedDocumentFile = null;
+    this.editCapturePreviewUrl = null;
+    this.editDocumentPreviewUrl = null;
+
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+  }
+
+  /**
+   * Ferme le modal de modification de réclamation
+   */
+  closeEditReclamationModal() {
+    this.isEditReclamationModalOpen = false;
+    this.reclamationToEdit = null;
+    this.editReclamationForm.reset();
+    
+    // Réinitialiser les fichiers et prévisualisations
+    this.editSelectedCaptureFile = null;
+    this.editSelectedDocumentFile = null;
+    this.editCapturePreviewUrl = null;
+    this.editDocumentPreviewUrl = null;
+    this.isUploadingEditCapture = false;
+    this.isUploadingEditDocument = false;
+    
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log("❌ Fermeture du modal de modification");
+  }
+
+  /**
+   * Gestion des fichiers pour la modification - Capture
+   */
+  onEditCaptureFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      // Vérifications
+      if (!file.type.startsWith('image/')) {
+        this.notificationService.showError('Veuillez sélectionner un fichier image valide.', 4000);
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) { // 5MB
+        this.notificationService.showError('La taille de l\'image ne doit pas dépasser 5MB.', 4000);
+        return;
+      }
+
+      this.editSelectedCaptureFile = file;
+      
+      // Créer une prévisualisation
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.editCapturePreviewUrl = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  /**
+   * Gestion des fichiers pour la modification - Document
+   */
+  onEditDocumentFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      // Vérifications
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        this.notificationService.showError('Formats acceptés : PNG, JPG, JPEG, PDF', 4000);
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) { // 10MB
+        this.notificationService.showError('La taille du fichier ne doit pas dépasser 10MB.', 4000);
+        return;
+      }
+
+      this.editSelectedDocumentFile = file;
+      
+      // Créer une prévisualisation pour les images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.editDocumentPreviewUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        this.editDocumentPreviewUrl = null;
+      }
+    }
+  }
+
+  /**
+   * Déclenche la sélection de fichier capture pour modification
+   */
+  triggerEditCaptureUpload() {
+    const fileInput = document.getElementById('editCaptureFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  /**
+   * Déclenche la sélection de fichier document pour modification
+   */
+  triggerEditDocumentUpload() {
+    const fileInput = document.getElementById('editDocumentFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  /**
+   * Supprime le fichier capture sélectionné pour modification
+   */
+  removeEditCaptureFile() {
+    this.editSelectedCaptureFile = null;
+    this.editCapturePreviewUrl = null;
+    
+    // Réinitialiser l'input file
+    const fileInput = document.getElementById('editCaptureFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  /**
+   * Supprime le fichier document sélectionné pour modification
+   */
+  removeEditDocumentFile() {
+    this.editSelectedDocumentFile = null;
+    this.editDocumentPreviewUrl = null;
+    
+    // Réinitialiser l'input file
+    const fileInput = document.getElementById('editDocumentFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  /**
+   * Soumet la modification de la réclamation
+   */
+  async submitEditReclamation() {
+    if (this.editReclamationForm.invalid || this.isEditingReclamation || !this.reclamationToEdit) {
+      return;
+    }
+
+    this.isEditingReclamation = true;
+    console.log("✏️ Soumission de la modification de réclamation en cours...");
+
+    try {
+      // Upload des fichiers si nécessaires
+      let captureUrl = this.reclamationToEdit.captureRecl || '';
+      let documentUrl = this.reclamationToEdit.documentRecl || '';
+
+      // Upload capture si nouveau fichier
+      if (this.editSelectedCaptureFile) {
+        this.isUploadingEditCapture = true;
+        try {
+          captureUrl = await this.uploadFile(this.editSelectedCaptureFile);
+          console.log("✅ Capture uploadée:", captureUrl);
+        } catch (error) {
+          console.error("❌ Erreur upload capture:", error);
+          this.notificationService.showError('Erreur lors de l\'upload de la capture', 4000);
+          this.isUploadingEditCapture = false;
+          this.isEditingReclamation = false;
+          return;
+        }
+        this.isUploadingEditCapture = false;
+      }
+
+      // Upload document si nouveau fichier
+      if (this.editSelectedDocumentFile) {
+        this.isUploadingEditDocument = true;
+        try {
+          documentUrl = await this.uploadFile(this.editSelectedDocumentFile);
+          console.log("✅ Document uploadé:", documentUrl);
+        } catch (error) {
+          console.error("❌ Erreur upload document:", error);
+          this.notificationService.showError('Erreur lors de l\'upload du document', 4000);
+          this.isUploadingEditDocument = false;
+          this.isEditingReclamation = false;
+          return;
+        }
+        this.isUploadingEditDocument = false;
+      }
+
+      // Créer l'objet réclamation modifié
+      const updatedReclamation: Reclamation = {
+        idRecl: this.reclamationToEdit.idRecl,
+        typeRecl: this.editReclamationForm.get('typeRecl')?.value as TypeRecl,
+        descriptionRecl: this.editReclamationForm.get('descriptionRecl')?.value,
+        captureRecl: captureUrl,
+        documentRecl: documentUrl,
+        etatRecl: this.reclamationToEdit.etatRecl,
+        dateRecl: this.reclamationToEdit.dateRecl,
+        descriptionReponRecl: this.reclamationToEdit.descriptionReponRecl,
+        dateReponRecl: this.reclamationToEdit.dateReponRecl,
+        utilisateurRecl: this.reclamationToEdit.utilisateurRecl
+      };
+
+      console.log("📤 Envoi de la réclamation modifiée:", updatedReclamation);
+
+      // Appel du service
+      this.gestionReclamationService.modifierReclamation(this.reclamationToEdit.idRecl, updatedReclamation).subscribe({
+        next: (response) => {
+          console.log("✅ Réclamation modifiée avec succès:", response);
+          this.isEditingReclamation = false;
+
+          // Gérer la réponse selon le format du backend
+          let updatedData;
+          if (response && response.body) {
+            // Si la réponse a un format avec body
+            updatedData = response.body;
+          } else {
+            // Si la réponse est directement l'objet
+            updatedData = response;
+          }
+
+          // Mettre à jour la liste des réclamations
+          const index = this.reclamationsList.findIndex(r => r.idRecl === this.reclamationToEdit!.idRecl);
+          if (index !== -1 && updatedData) {
+            this.reclamationsList[index] = updatedData;
+            this.applyFilters();
+          }
+
+          // Fermer le modal
+          this.closeEditReclamationModal();
+
+          // Afficher un message de succès
+          this.notificationService.showSuccess('Réclamation modifiée avec succès !', 4000);
+        },
+        error: (error) => {
+          console.error("❌ Erreur lors de la modification de la réclamation:", error);
+          this.isEditingReclamation = false;
+
+          let errorMessage = 'Une erreur s\'est produite lors de la modification de la réclamation.';
+          
+          // Gérer les différents types d'erreurs selon le backend
+          if (error.status === 400) {
+            // Erreur de validation du backend
+            if (error.error && typeof error.error === 'string') {
+              errorMessage = error.error;
+            } else if (error.error && error.error.body && typeof error.error.body === 'string') {
+              errorMessage = error.error.body;
+            } else {
+              errorMessage = 'La réclamation ne peut être modifiée que si elle est en attente.';
+            }
+          } else if (error.status === 401) {
+            errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+          } else if (error.status === 403) {
+            errorMessage = 'Vous n\'avez pas les permissions pour modifier cette réclamation.';
+          } else if (error.status === 404) {
+            errorMessage = 'Réclamation non trouvée.';
+          }
+
+          this.notificationService.showError(errorMessage, 5000);
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ Erreur générale lors de la modification:", error);
+      this.isEditingReclamation = false;
+      this.notificationService.showError('Une erreur inattendue s\'est produite.', 4000);
+    }
   }
 
 }

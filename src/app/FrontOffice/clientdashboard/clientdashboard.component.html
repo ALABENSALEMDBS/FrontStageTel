@@ -894,6 +894,17 @@
                 </button>
 
                 <button 
+                  class="edit-btn"
+                  (click)="openEditReclamationModal(reclamation)"
+                  title="Modifier cette réclamation"
+                  [disabled]="!canEditReclamation(reclamation)"
+                  [class.disabled]="!canEditReclamation(reclamation)"
+                >
+                  <span class="btn-icon">✏️</span>
+                  Modifier
+                </button>
+
+                <button 
                   class="delete-btn"
                   (click)="openDeleteConfirmation(reclamation)"
                   title="Supprimer cette réclamation"
@@ -974,6 +985,265 @@
       >
         <span *ngIf="isDeletingReclamation">🔄 Suppression...</span>
         <span *ngIf="!isDeletingReclamation">🗑️ Supprimer définitivement</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour modifier une réclamation -->
+<div class="modal-overlay" [class.show]="isEditReclamationModalOpen" (click)="closeEditReclamationModal()">
+  <div class="modal-content edit-reclamation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">✏️ Modifier la réclamation</h3>
+      <button class="modal-close" (click)="closeEditReclamationModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="reclamationToEdit">
+      <!-- Informations de la réclamation -->
+      <div class="reclamation-info-section">
+        <h4 class="info-title">📋 Réclamation #{{ reclamationToEdit.idRecl }}</h4>
+        <div class="reclamation-status-info">
+          <span class="status-badge" [class]="getEtatReclClass(reclamationToEdit.etatRecl)">
+            {{ getEtatReclLabel(reclamationToEdit.etatRecl) }}
+          </span>
+          <span class="creation-date">Créée le {{ formatDate(reclamationToEdit.dateRecl) }}</span>
+        </div>
+      </div>
+
+      <!-- Message d'information sur la limitation -->
+      <div class="info-banner warning" *ngIf="!canEditReclamation(reclamationToEdit)">
+        <div class="info-icon">⚠️</div>
+        <div class="info-content">
+          <h5>Modification non autorisée</h5>
+          <p>Seules les réclamations <strong>en attente</strong> peuvent être modifiées. Cette réclamation est actuellement <strong>{{ getEtatReclLabel(reclamationToEdit.etatRecl).toLowerCase() }}</strong>.</p>
+        </div>
+      </div>
+
+      <div class="info-banner" *ngIf="canEditReclamation(reclamationToEdit)">
+        <div class="info-icon">ℹ️</div>
+        <div class="info-content">
+          <h5>Modification autorisée</h5>
+          <p>Vous pouvez modifier cette réclamation car elle est encore <strong>en attente</strong> de traitement.</p>
+        </div>
+      </div>
+
+      <form [formGroup]="editReclamationForm" class="edit-reclamation-form" *ngIf="canEditReclamation(reclamationToEdit)">
+        <!-- Type de réclamation -->
+        <div class="form-group">
+          <label for="editTypeRecl" class="form-label">
+            <span class="label-icon">🏷️</span>
+            Type de réclamation *
+          </label>
+          <select 
+            id="editTypeRecl" 
+            formControlName="typeRecl" 
+            class="form-input"
+            [class.error]="editReclamationForm.get('typeRecl')?.invalid && editReclamationForm.get('typeRecl')?.touched"
+          >
+            <option value="">Sélectionnez un type</option>
+            <option value="Mon_compte_MY_TT">Mon compte MY TT</option>
+            <option value="Mon_Mobile">Mon Mobile</option>
+            <option value="Internet_Mobile">Internet Mobile</option>
+            <option value="Mon_Fixe">Mon Fixe</option>
+            <option value="Service_e_Facture">Service e-Facture</option>
+          </select>
+          <div class="error-message" *ngIf="editReclamationForm.get('typeRecl')?.invalid && editReclamationForm.get('typeRecl')?.touched">
+            Le type de réclamation est requis
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="editDescriptionRecl" class="form-label">
+            <span class="label-icon">📝</span>
+            Description du problème *
+          </label>
+          <textarea 
+            id="editDescriptionRecl"
+            formControlName="descriptionRecl"
+            class="form-textarea"
+            rows="4"
+            placeholder="Décrivez votre problème en détail..."
+            [class.error]="editReclamationForm.get('descriptionRecl')?.invalid && editReclamationForm.get('descriptionRecl')?.touched"
+          ></textarea>
+          <div class="char-counter">
+            {{ editReclamationForm.get('descriptionRecl')?.value?.length || 0 }}/500 caractères
+          </div>
+          <div class="error-message" *ngIf="editReclamationForm.get('descriptionRecl')?.invalid && editReclamationForm.get('descriptionRecl')?.touched">
+            <span *ngIf="editReclamationForm.get('descriptionRecl')?.errors?.['required']">La description est requise</span>
+            <span *ngIf="editReclamationForm.get('descriptionRecl')?.errors?.['minlength']">La description doit contenir au moins 10 caractères</span>
+            <span *ngIf="editReclamationForm.get('descriptionRecl')?.errors?.['maxlength']">La description ne peut pas dépasser 500 caractères</span>
+          </div>
+        </div>
+
+        <!-- Section des fichiers existants -->
+        <div class="existing-files-section" *ngIf="reclamationToEdit.captureRecl || reclamationToEdit.documentRecl">
+          <h5 class="section-title">📎 Fichiers actuels</h5>
+          <div class="existing-files-grid">
+            <div class="existing-file-item" *ngIf="reclamationToEdit.captureRecl">
+              <div class="file-icon">📷</div>
+              <div class="file-info">
+                <span class="file-name">Capture d'écran actuelle</span>
+                <a [href]="reclamationToEdit.captureRecl" target="_blank" class="file-link">Voir le fichier</a>
+              </div>
+            </div>
+            <div class="existing-file-item" *ngIf="reclamationToEdit.documentRecl">
+              <div class="file-icon">📄</div>
+              <div class="file-info">
+                <span class="file-name">Document actuel</span>
+                <a [href]="reclamationToEdit.documentRecl" target="_blank" class="file-link">Voir le fichier</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section des nouveaux fichiers -->
+        <div class="files-row">
+          <!-- Nouvelle capture d'écran -->
+          <div class="form-group file-group">
+            <label class="form-label">
+              <span class="label-icon">📷</span>
+              Nouvelle capture d'écran (optionnel)
+            </label>
+            <div class="file-upload-container">
+              <input 
+                type="file" 
+                id="editCaptureFileInput" 
+                accept=".png,.jpg,.jpeg" 
+                (change)="onEditCaptureFileSelected($event)"
+                class="file-input"
+                hidden
+              >
+              <button 
+                type="button" 
+                class="file-upload-btn"
+                (click)="triggerEditCaptureUpload()"
+                [disabled]="isUploadingEditCapture"
+              >
+                <span class="upload-icon">📷</span>
+                <span *ngIf="!isUploadingEditCapture && !editSelectedCaptureFile">Choisir une nouvelle image</span>
+                <span *ngIf="isUploadingEditCapture">🔄 Upload...</span>
+                <span *ngIf="!isUploadingEditCapture && editSelectedCaptureFile">Changer l'image</span>
+              </button>
+              <div class="file-info" *ngIf="editSelectedCaptureFile">
+                <div class="file-details">
+                  <div class="file-name">{{ editSelectedCaptureFile.name }}</div>
+                  <div class="file-size">({{ formatFileSize(editSelectedCaptureFile.size) }})</div>
+                </div>
+                <button type="button" class="remove-file-btn" (click)="removeEditCaptureFile()">❌</button>
+              </div>
+              <div class="upload-hint">
+                <small>Formats acceptés : PNG, JPG, JPEG (max 5MB)</small>
+              </div>
+              
+              <!-- Prévisualisation de la nouvelle image -->
+              <div class="file-preview" *ngIf="editSelectedCaptureFile && editCapturePreviewUrl">
+                <div class="preview-header">
+                  <span class="preview-icon">👁️</span>
+                  <span class="preview-title">Aperçu de la nouvelle image</span>
+                </div>
+                <div class="image-preview-container">
+                  <img [src]="editCapturePreviewUrl" [alt]="editSelectedCaptureFile.name" class="preview-image">
+                  <div class="image-overlay">
+                    <button type="button" class="zoom-btn" (click)="openImagePreview(editCapturePreviewUrl, editSelectedCaptureFile.name)">
+                      🔍 Agrandir
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nouveau document -->
+          <div class="form-group file-group">
+            <label class="form-label">
+              <span class="label-icon">📄</span>
+              Nouveau document justificatif (optionnel)
+            </label>
+            <div class="file-upload-container">
+              <input 
+                type="file" 
+                id="editDocumentFileInput" 
+                accept=".pdf,.png,.jpg,.jpeg" 
+                (change)="onEditDocumentFileSelected($event)"
+                class="file-input"
+                hidden
+              >
+              <button 
+                type="button" 
+                class="file-upload-btn"
+                (click)="triggerEditDocumentUpload()"
+                [disabled]="isUploadingEditDocument"
+              >
+                <span class="upload-icon">📄</span>
+                <span *ngIf="!isUploadingEditDocument && !editSelectedDocumentFile">Choisir un nouveau fichier</span>
+                <span *ngIf="isUploadingEditDocument">🔄 Upload...</span>
+                <span *ngIf="!isUploadingEditDocument && editSelectedDocumentFile">Changer le fichier</span>
+              </button>
+              <div class="file-info" *ngIf="editSelectedDocumentFile">
+                <div class="file-details">
+                  <div class="file-name">{{ editSelectedDocumentFile.name }}</div>
+                  <div class="file-size">({{ formatFileSize(editSelectedDocumentFile.size) }})</div>
+                </div>
+                <button type="button" class="remove-file-btn" (click)="removeEditDocumentFile()">❌</button>
+              </div>
+              <div class="upload-hint">
+                <small>Formats acceptés : PDF, PNG, JPG, JPEG (max 10MB)</small>
+              </div>
+              
+              <!-- Prévisualisation du nouveau document -->
+              <div class="file-preview" *ngIf="editSelectedDocumentFile">
+                <div class="preview-header">
+                  <span class="preview-icon">👁️</span>
+                  <span class="preview-title">Aperçu du nouveau document</span>
+                </div>
+                
+                <!-- Prévisualisation pour images -->
+                <div class="image-preview-container" *ngIf="isImageFile(editSelectedDocumentFile.type) && editDocumentPreviewUrl">
+                  <img [src]="editDocumentPreviewUrl" [alt]="editSelectedDocumentFile.name" class="preview-image">
+                  <div class="image-overlay">
+                    <button type="button" class="zoom-btn" (click)="openImagePreview(editDocumentPreviewUrl, editSelectedDocumentFile.name)">
+                      🔍 Agrandir
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Prévisualisation pour PDF -->
+                <div class="pdf-preview-container" *ngIf="isPdfFile(editSelectedDocumentFile.type)">
+                  <div class="pdf-icon-large">📄</div>
+                  <div class="pdf-info">
+                    <div class="pdf-name">{{ editSelectedDocumentFile.name }}</div>
+                    <div class="pdf-size">{{ formatFileSize(editSelectedDocumentFile.size) }}</div>
+                    <button type="button" class="view-pdf-btn" (click)="openPdfPreview(editSelectedDocumentFile)">
+                      📖 Ouvrir le PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Message si modification non autorisée -->
+      <div class="modification-disabled-message" *ngIf="!canEditReclamation(reclamationToEdit)">
+        <p>Cette réclamation ne peut plus être modifiée car elle n'est plus en attente de traitement.</p>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeEditReclamationModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn-submit" 
+        (click)="submitEditReclamation()"
+        [disabled]="editReclamationForm.invalid || isEditingReclamation || !canEditReclamation(reclamationToEdit)"
+        *ngIf="canEditReclamation(reclamationToEdit)"
+      >
+        <span *ngIf="isEditingReclamation">🔄 Modification...</span>
+        <span *ngIf="!isEditingReclamation">✏️ Enregistrer les modifications</span>
       </button>
     </div>
   </div>
