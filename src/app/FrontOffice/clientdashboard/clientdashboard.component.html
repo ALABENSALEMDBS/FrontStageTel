@@ -526,6 +526,7 @@
             formControlName="typeRecl" 
             class="form-input"
             [class.error]="reclamationForm.get('typeRecl')?.invalid && reclamationForm.get('typeRecl')?.touched"
+            (change)="onTypeReclChange($event)"
           >
             <option value="">Sélectionnez un type</option>
             <option value="Mon_compte_MY_TT">Mon compte MY TT</option>
@@ -536,6 +537,53 @@
           </select>
           <div class="error-message" *ngIf="reclamationForm.get('typeRecl')?.invalid && reclamationForm.get('typeRecl')?.touched">
             Le type de réclamation est requis
+          </div>
+        </div>
+
+        <!-- Sujet de la réclamation -->
+        <div class="form-group" *ngIf="currentSujetReclOptions.length > 0">
+          <label for="sujetRecl" class="form-label">
+            <span class="label-icon">📋</span>
+            Sujet de la réclamation *
+          </label>
+          <select 
+            id="sujetRecl" 
+            formControlName="sujetRecl" 
+            class="form-input"
+            [class.error]="reclamationForm.get('sujetRecl')?.invalid && reclamationForm.get('sujetRecl')?.touched"
+          >
+            <option value="">Sélectionnez le sujet</option>
+            <option *ngFor="let option of currentSujetReclOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+          <div class="error-message" *ngIf="reclamationForm.get('sujetRecl')?.invalid && reclamationForm.get('sujetRecl')?.touched">
+            Le sujet est requis
+          </div>
+        </div>
+
+        <!-- Numéro concerné -->
+        <div class="form-group">
+          <label for="numeroConcerne" class="form-label">
+            <span class="label-icon">📞</span>
+            Numéro concerné *
+          </label>
+          <input 
+            id="numeroConcerne"
+            formControlName="numeroConcerne"
+            type="text"
+            class="form-input"
+            placeholder="Entrez le numéro de 8 chiffres..."
+            maxlength="8"
+            [class.error]="reclamationForm.get('numeroConcerne')?.invalid && reclamationForm.get('numeroConcerne')?.touched"
+            (input)="limitNumeroConcerneDigits($event)"
+          >
+          <div class="input-hint">
+            <small>Format: 8 chiffres exactement (ex: 12345678)</small>
+          </div>
+          <div class="error-message" *ngIf="reclamationForm.get('numeroConcerne')?.invalid && reclamationForm.get('numeroConcerne')?.touched">
+            <span *ngIf="reclamationForm.get('numeroConcerne')?.errors?.['required']">Le numéro concerné est requis</span>
+            <span *ngIf="reclamationForm.get('numeroConcerne')?.errors?.['pattern']">Le numéro doit contenir exactement 8 chiffres</span>
           </div>
         </div>
 
@@ -842,6 +890,22 @@
                 <span class="type-text">{{ getTypeReclLabel(reclamation.typeRecl) }}</span>
               </div>
               
+              <!-- Sujet de la réclamation -->
+              <div class="reclamation-sujet" *ngIf="reclamation.sujetRecl">
+                <div class="sujet-item">
+                  <span class="sujet-label">📋 Sujet:</span>
+                  <span class="sujet-value">{{ reclamation.sujetRecl }}</span>
+                </div>
+              </div>
+              
+              <!-- Numéro concerné -->
+              <div class="reclamation-numero" *ngIf="reclamation.numeroConcerne">
+                <div class="numero-item">
+                  <span class="numero-label">🔢 Numéro concerné:</span>
+                  <span class="numero-value">{{ reclamation.numeroConcerne }}</span>
+                </div>
+              </div>
+              
               <div class="reclamation-description">
                 <p>{{ reclamation.descriptionRecl }}</p>
               </div>
@@ -1039,6 +1103,7 @@
             formControlName="typeRecl" 
             class="form-input"
             [class.error]="editReclamationForm.get('typeRecl')?.invalid && editReclamationForm.get('typeRecl')?.touched"
+            (change)="onEditTypeReclChange($event)"
           >
             <option value="">Sélectionnez un type</option>
             <option value="Mon_compte_MY_TT">Mon compte MY TT</option>
@@ -1049,6 +1114,53 @@
           </select>
           <div class="error-message" *ngIf="editReclamationForm.get('typeRecl')?.invalid && editReclamationForm.get('typeRecl')?.touched">
             Le type de réclamation est requis
+          </div>
+        </div>
+
+        <!-- Sujet de la réclamation -->
+        <div class="form-group" *ngIf="currentSujetReclOptions.length > 0">
+          <label for="editSujetRecl" class="form-label">
+            <span class="label-icon">📋</span>
+            Sujet de la réclamation *
+          </label>
+          <select 
+            id="editSujetRecl" 
+            formControlName="sujetRecl" 
+            class="form-input"
+            [class.error]="editReclamationForm.get('sujetRecl')?.invalid && editReclamationForm.get('sujetRecl')?.touched"
+          >
+            <option value="">Sélectionnez le sujet</option>
+            <option *ngFor="let option of currentSujetReclOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+          <div class="error-message" *ngIf="editReclamationForm.get('sujetRecl')?.invalid && editReclamationForm.get('sujetRecl')?.touched">
+            Le sujet est requis
+          </div>
+        </div>
+
+        <!-- Numéro concerné -->
+        <div class="form-group">
+          <label for="editNumeroConcerne" class="form-label">
+            <span class="label-icon">📞</span>
+            Numéro concerné *
+          </label>
+          <input 
+            id="editNumeroConcerne"
+            formControlName="numeroConcerne"
+            type="text"
+            class="form-input"
+            placeholder="Entrez le numéro de 8 chiffres..."
+            maxlength="8"
+            [class.error]="editReclamationForm.get('numeroConcerne')?.invalid && editReclamationForm.get('numeroConcerne')?.touched"
+            (input)="limitEditNumeroConcerneDigits($event)"
+          >
+          <div class="input-hint">
+            <small>Format: 8 chiffres exactement (ex: 12345678)</small>
+          </div>
+          <div class="error-message" *ngIf="editReclamationForm.get('numeroConcerne')?.invalid && editReclamationForm.get('numeroConcerne')?.touched">
+            <span *ngIf="editReclamationForm.get('numeroConcerne')?.errors?.['required']">Le numéro concerné est requis</span>
+            <span *ngIf="editReclamationForm.get('numeroConcerne')?.errors?.['pattern']">Le numéro doit contenir exactement 8 chiffres</span>
           </div>
         </div>
 

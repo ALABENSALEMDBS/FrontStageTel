@@ -26,4 +26,7 @@ export class Reclamation{
     descriptionReponRecl!: string;
     dateReponRecl!: Date
     utilisateurRecl!: Utilisateur;
+
+    numeroConcerne!: number;
+    sujetRecl!: string;
 }

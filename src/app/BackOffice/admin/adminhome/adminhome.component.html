@@ -625,6 +625,22 @@
                 <span class="type-text">{{ getTypeReclLabel(reclamation.typeRecl) }}</span>
               </div>
               
+              <!-- Sujet de la réclamation -->
+              <div class="reclamation-sujet" *ngIf="reclamation.sujetRecl">
+                <div class="sujet-item">
+                  <span class="sujet-label">📋 Sujet:</span>
+                  <span class="sujet-value">{{ reclamation.sujetRecl }}</span>
+                </div>
+              </div>
+              
+              <!-- Numéro concerné -->
+              <div class="reclamation-numero" *ngIf="reclamation.numeroConcerne">
+                <div class="numero-item">
+                  <span class="numero-label">🔢 Numéro concerné:</span>
+                  <span class="numero-value">{{ reclamation.numeroConcerne }}</span>
+                </div>
+              </div>
+              
               <div class="reclamation-description">
                 <p>{{ reclamation.descriptionRecl }}</p>
               </div>
