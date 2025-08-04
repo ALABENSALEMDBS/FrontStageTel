@@ -2765,6 +2765,51 @@
   color: #2d3748;
 }
 
+/* Sujet de la réclamation */
+.reclamation-sujet .sujet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #fff8e1, #fff3c4);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #ffe082;
+}
+
+.sujet-label {
+  font-weight: 600;
+  color: #f57c00;
+}
+
+.sujet-value {
+  color: #ef6c00;
+  font-weight: 500;
+}
+
+/* Numéro concerné */
+.reclamation-numero .numero-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #c3e6cb;
+}
+
+.numero-label {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.numero-value {
+  color: #1b5e20;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
 .reclamation-description p {
   margin: 0;
   color: #4a5568;
@@ -3662,6 +3707,16 @@
 .upload-hint small {
   color: #6c757d;
   font-size: 0.8rem;
+}
+
+.input-hint {
+  margin-top: 0.25rem;
+}
+
+.input-hint small {
+  color: #6c757d;
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 /* Prévisualisations de fichiers */

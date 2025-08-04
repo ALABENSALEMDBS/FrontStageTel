@@ -100,6 +100,37 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     { value: 'REJETEE', label: 'Fermé' }
   ]
 
+  // Options pour les sujets de réclamation selon le type
+  sujetReclOptions: { [key: string]: string[] } = {
+    'Mon_compte_MY_TT': [
+      'Paiement Factures',
+      'Achat Forfait',
+      'Transfert Solde'
+    ],
+    'Mon_Mobile': [
+      'jeux & Applications Mobile',
+      'Appels et SMS',
+      'Roaming'
+    ],
+    'Internet_Mobile': [
+      'Forfait',
+      'Connexion Mobile Wifi',
+      'Connexion Mobile'
+    ],
+    'Mon_Fixe': [
+      'Retard Nouvelle Installation',
+      'Recharge',
+      'Fibre optique'
+    ],
+    'Service_e_Facture': [
+      'Corriger mon adresse Email',
+      'Désactiver le service e-Facture'
+    ]
+  }
+
+  // Options actuelles pour le dropdown sujet
+  currentSujetReclOptions: string[] = []
+
   services = [
     {
       icon: "📱",
@@ -156,12 +187,16 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     // Initialiser le formulaire de réclamation
     this.reclamationForm = this.fb.group({
       typeRecl: ['', [Validators.required]],
+      sujetRecl: ['', [Validators.required]],
+      numeroConcerne: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
       descriptionRecl: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
     });
 
     // Initialiser le formulaire d'édition de réclamation
     this.editReclamationForm = this.fb.group({
       typeRecl: ['', [Validators.required]],
+      sujetRecl: ['', [Validators.required]],
+      numeroConcerne: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
       descriptionRecl: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
     });
   }
@@ -694,6 +729,8 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       // Créer l'objet réclamation de base
       const reclamation = new Reclamation();
       reclamation.typeRecl = this.reclamationForm.get('typeRecl')?.value as TypeRecl;
+      reclamation.sujetRecl = this.reclamationForm.get('sujetRecl')?.value;
+      reclamation.numeroConcerne = this.reclamationForm.get('numeroConcerne')?.value;
       reclamation.descriptionRecl = this.reclamationForm.get('descriptionRecl')?.value;
       reclamation.captureRecl = '';
       reclamation.documentRecl = '';
@@ -807,13 +844,95 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     this.isReclamationModalOpen = true;
     // Réinitialiser le formulaire
     this.reclamationForm.reset();
+    
+    // Pré-remplir le numéro concerné avec le numéro de ligne de l'utilisateur
+    if (this.currentUser && this.currentUser.numeroLigne) {
+      this.reclamationForm.patchValue({
+        numeroConcerne: this.currentUser.numeroLigne
+      });
+      console.log("📞 Numéro concerné pré-rempli avec le numéro de ligne:", this.currentUser.numeroLigne);
+    }
+    
     this.selectedCaptureFile = null;
     this.selectedDocumentFile = null;
     this.isUploadingCapture = false;
     this.isUploadingDocument = false;
+    // Réinitialiser les options du numéro concerné
+    this.currentSujetReclOptions = [];
     // Bloquer le scroll de la page
     document.body.style.overflow = 'hidden';
     console.log("Modal réclamation ouvert");
+  }
+
+  // Méthode pour gérer le changement de type de réclamation
+  onTypeReclChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const selectedType = target.value;
+    
+    // Mettre à jour les options du sujet
+    this.updateSujetReclOptions(selectedType);
+    
+    // Réinitialiser le champ sujetRecl
+    this.reclamationForm.patchValue({
+      sujetRecl: ''
+    });
+  }
+
+  // Méthode pour gérer le changement de type de réclamation en mode édition
+  onEditTypeReclChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const selectedType = target.value;
+    
+    // Mettre à jour les options du sujet
+    this.updateSujetReclOptions(selectedType);
+    
+    // Réinitialiser le champ sujetRecl
+    this.editReclamationForm.patchValue({
+      sujetRecl: ''
+    });
+  }
+
+  // Méthode pour mettre à jour les options du sujet
+  updateSujetReclOptions(typeRecl: string) {
+    if (typeRecl && this.sujetReclOptions[typeRecl]) {
+      this.currentSujetReclOptions = this.sujetReclOptions[typeRecl];
+    } else {
+      this.currentSujetReclOptions = [];
+    }
+  }
+
+  // Méthode pour limiter les chiffres dans le champ numeroConcerne
+  limitNumeroConcerneDigits(event: any) {
+    const input = event.target;
+    let value = input.value.replace(/\D/g, ''); // Supprimer tous les caractères non numériques
+    
+    if (value.length > 8) {
+      value = value.substring(0, 8); // Limiter à 8 chiffres
+    }
+    
+    input.value = value;
+    
+    // Mettre à jour le FormControl
+    this.reclamationForm.patchValue({
+      numeroConcerne: value
+    });
+  }
+
+  // Méthode pour limiter les chiffres dans le champ numeroConcerne en mode édition
+  limitEditNumeroConcerneDigits(event: any) {
+    const input = event.target;
+    let value = input.value.replace(/\D/g, ''); // Supprimer tous les caractères non numériques
+    
+    if (value.length > 8) {
+      value = value.substring(0, 8); // Limiter à 8 chiffres
+    }
+    
+    input.value = value;
+    
+    // Mettre à jour le FormControl
+    this.editReclamationForm.patchValue({
+      numeroConcerne: value
+    });
   }
 
   closeReclamationModal() {
@@ -1504,8 +1623,13 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     // Pré-remplir le formulaire avec les données existantes
     this.editReclamationForm.patchValue({
       typeRecl: reclamation.typeRecl,
+      sujetRecl: reclamation.sujetRecl || '',
+      numeroConcerne: reclamation.numeroConcerne || '',
       descriptionRecl: reclamation.descriptionRecl
     });
+
+    // Mettre à jour les options du sujet selon le type
+    this.updateSujetReclOptions(reclamation.typeRecl);
 
     // Réinitialiser les fichiers
     this.editSelectedCaptureFile = null;
@@ -1699,6 +1823,8 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       const updatedReclamation: Reclamation = {
         idRecl: this.reclamationToEdit.idRecl,
         typeRecl: this.editReclamationForm.get('typeRecl')?.value as TypeRecl,
+        sujetRecl: this.editReclamationForm.get('sujetRecl')?.value,
+        numeroConcerne: this.editReclamationForm.get('numeroConcerne')?.value,
         descriptionRecl: this.editReclamationForm.get('descriptionRecl')?.value,
         captureRecl: captureUrl,
         documentRecl: documentUrl,
