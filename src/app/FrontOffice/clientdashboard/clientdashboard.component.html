@@ -91,11 +91,11 @@
             <div class="stat-label">Facture du mois</div>
           </div>
         </div>-->
-        <div class="stat-card">
+        <div class="stat-card renseignements-card blinking" (click)="openRenseignementsListModal()" style="cursor: pointer;">
           <div class="stat-icon">📱</div>
           <div class="stat-info">
-            <div class="stat-number">85%</div>
-            <div class="stat-label">Renseignement</div>
+            <div class="stat-number">{{renseignementsList.length}} Renseignement(s)</div>
+            <div class="stat-label">Afficher Renseignement</div>
           </div>
         </div> 
       </div>
@@ -489,6 +489,129 @@
       </div>
     </div>
   </div>
+
+<!-- Modal pour créer un renseignement -->
+<div class="modal-overlay" [class.show]="isRenseignementModalOpen" (click)="closeRenseignementModal()">
+  <div class="modal-content renseignement-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">💬 Créer un renseignement</h3>
+      <div class="header-actions">
+        <button class="list-renseignements-btn-header" (click)="openRenseignementsListModal(); closeRenseignementModal()">
+          <span class="btn-icon">📝</span>
+          Lister mes renseignements
+        </button>
+        <button class="modal-close" (click)="closeRenseignementModal()">×</button>
+      </div>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Message d'information -->
+      <div class="info-banner">
+        <div class="info-icon">💡</div>
+        <div class="info-content">
+          <h5>Demande de renseignement</h5>
+          <p>Posez vos questions concernant nos services, offres, tarifs ou toute autre demande d'information.</p>
+        </div>
+      </div>
+
+      <!-- Message de limitation -->
+      <div class="info-banner limitation-banner">
+        <div class="info-icon">⚠️</div>
+        <div class="info-content">
+          <h5>Limitation importante</h5>
+          <p>Vous ne pouvez créer que <strong>3 renseignements maximum par jour</strong> pour assurer un traitement optimal de vos demandes.</p>
+        </div>
+      </div>
+
+      <form [formGroup]="renseignementForm" class="renseignement-form">
+        <!-- Sujet du renseignement -->
+        <div class="form-group">
+          <label for="sujetRens" class="form-label">
+            <span class="label-icon">📋</span>
+            Sujet de votre demande *
+          </label>
+          <div class="dropdown-container">
+            <select 
+              id="sujetRens"
+              formControlName="sujetRens"
+              class="form-input"
+              [class.error]="renseignementForm.get('sujetRens')?.invalid && renseignementForm.get('sujetRens')?.touched"
+            >
+              <option value="">Sélectionnez le sujet de votre demande</option>
+              <option *ngFor="let option of sujetRenseignementOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+          </div>
+          <div class="error-message" *ngIf="renseignementForm.get('sujetRens')?.invalid && renseignementForm.get('sujetRens')?.touched">
+            <span *ngIf="renseignementForm.get('sujetRens')?.errors?.['required']">Le sujet est requis</span>
+          </div>
+        </div>
+
+        <!-- Description de la demande -->
+        <div class="form-group">
+          <label for="descriptionRens" class="form-label">
+            <span class="label-icon">💬</span>
+            Description de votre demande *
+          </label>
+          <textarea 
+            id="descriptionRens"
+            formControlName="descriptionRens"
+            class="form-textarea"
+            rows="5"
+            placeholder="Décrivez votre demande de renseignement en détail..."
+            [class.error]="renseignementForm.get('descriptionRens')?.invalid && renseignementForm.get('descriptionRens')?.touched"
+          ></textarea>
+          <div class="char-counter">
+            {{ renseignementForm.get('descriptionRens')?.value?.length || 0 }}/500 caractères
+          </div>
+          <div class="error-message" *ngIf="renseignementForm.get('descriptionRens')?.invalid && renseignementForm.get('descriptionRens')?.touched">
+            <span *ngIf="renseignementForm.get('descriptionRens')?.errors?.['required']">La description est requise</span>
+            <span *ngIf="renseignementForm.get('descriptionRens')?.errors?.['minlength']">La description doit contenir au moins 10 caractères</span>
+            <span *ngIf="renseignementForm.get('descriptionRens')?.errors?.['maxlength']">La description ne peut pas dépasser 500 caractères</span>
+          </div>
+        </div>
+
+        <!-- Informations client (automatiques) -->
+        <div class="form-group client-info">
+          <h4 class="info-title">
+            <span class="info-icon">👤</span>
+            Informations du client
+          </h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Nom complet</label>
+              <span>{{ currentUser?.prenomUser }} {{ currentUser?.nomUser }}</span>
+            </div>
+            <div class="info-item">
+              <label>Email</label>
+              <span>{{ currentUser?.emailUser }}</span>
+            </div>
+            <div class="info-item">
+              <label>Numéro de ligne</label>
+              <span>{{ currentUser?.numeroLigne || 'Non renseigné' }}</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeRenseignementModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn-submit" 
+        (click)="submitRenseignement()"
+        [disabled]="renseignementForm.invalid || isSubmittingRenseignement"
+      >
+        <span *ngIf="isSubmittingRenseignement">🔄 Envoi...</span>
+        <span *ngIf="!isSubmittingRenseignement">💬 Envoyer la demande</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal pour créer une réclamation -->
 <div class="modal-overlay" [class.show]="isReclamationModalOpen" (click)="closeReclamationModal()">
@@ -1357,6 +1480,133 @@
         <span *ngIf="isEditingReclamation">🔄 Modification...</span>
         <span *ngIf="!isEditingReclamation">✏️ Enregistrer les modifications</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour afficher la liste des renseignements -->
+<div class="modal-overlay" [class.show]="isRenseignementsListModalOpen" (click)="closeRenseignementsListModal()">
+  <div class="modal-content renseignements-list-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">💬 Mes Renseignements</h3>
+      <div class="header-actions">
+        <button class="add-renseignement-btn-header" (click)="openRenseignement(); closeRenseignementsListModal()">
+          <span class="btn-icon">💬</span>
+          Nouveau renseignement
+        </button>
+        <button class="modal-close" (click)="closeRenseignementsListModal()">×</button>
+      </div>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Filtres -->
+      <div class="filters-section">
+        <h4 class="filters-title">🔍 Filtres</h4>
+        <div class="filters-row">
+          <div class="filter-group">
+            <label for="filterIdRens">ID renseignement :</label>
+            <input 
+              id="filterIdRens" 
+              type="text" 
+              [(ngModel)]="filterIdRens" 
+              (input)="onRenseignementFilterChange()"
+              placeholder="Rechercher par ID..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterSujetRens">Sujet :</label>
+            <select 
+              id="filterSujetRens" 
+              [(ngModel)]="filterSujetRens" 
+              (change)="onRenseignementFilterChange()"
+              class="filter-select"
+            >
+              <option value="">Tous les sujets</option>
+              <option *ngFor="let option of sujetRenseignementOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-actions">
+            <button class="clear-filters-btn" (click)="clearRenseignementFilters()">
+              🔄 Effacer
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading -->
+      <div class="loading-section" *ngIf="isLoadingRenseignements">
+        <div class="loading-spinner"></div>
+        <p>Chargement des renseignements...</p>
+      </div>
+      
+      <!-- Liste des renseignements -->
+      <div class="renseignements-list" *ngIf="!isLoadingRenseignements">
+        <div class="renseignements-header">
+          <h4>
+            📊 {{ filteredRenseignementsList.length }} renseignement(s) 
+            <span *ngIf="filteredRenseignementsList.length !== renseignementsList.length">
+              sur {{ renseignementsList.length }}
+            </span>
+          </h4>
+        </div>
+        
+        <!-- Message si aucun renseignement -->
+        <div class="no-renseignements" *ngIf="filteredRenseignementsList.length === 0">
+          <div class="no-data-icon">💬</div>
+          <h5>Aucun renseignement trouvé</h5>
+          <p *ngIf="renseignementsList.length === 0">Vous n'avez pas encore créé de renseignement.</p>
+          <p *ngIf="renseignementsList.length > 0">Aucun renseignement ne correspond à vos critères de recherche.</p>
+        </div>
+        
+        <!-- Cartes des renseignements -->
+        <div class="renseignements-grid" *ngIf="filteredRenseignementsList.length > 0">
+          <div class="renseignement-card" *ngFor="let renseignement of filteredRenseignementsList">
+            <div class="renseignement-header">
+              <div class="renseignement-id">
+                <span class="id-label">ID:</span>
+                <span class="id-value">#{{ renseignement.idRens }}</span>
+              </div>
+              <div class="renseignement-status" [class]="renseignement.descriptionReponRens ? 'status-resolved' : 'status-pending'">
+                {{ renseignement.descriptionReponRens ? 'Répondu' : 'En attente' }}
+              </div>
+            </div>
+            
+            <div class="renseignement-body">
+              <div class="renseignement-sujet">
+                <span class="sujet-icon">📋</span>
+                <span class="sujet-text">{{ renseignement.sujetRens }}</span>
+              </div>
+              
+              <div class="renseignement-description">
+                <h6>💬 Demande:</h6>
+                <p>{{ renseignement.descriptionRens }}</p>
+              </div>
+              
+              <div class="renseignement-dates">
+                <div class="date-item">
+                  <span class="date-label">📅 Créé le:</span>
+                  <span class="date-value">{{ formatRenseignementDate(renseignement.dateRens) }}</span>
+                </div>
+                <div class="date-item" *ngIf="renseignement.dateReponRens">
+                  <span class="date-label">✅ Répondu le:</span>
+                  <span class="date-value">{{ formatRenseignementDate(renseignement.dateReponRens) }}</span>
+                </div>
+              </div>
+              
+              <!-- Réponse si disponible -->
+              <div class="renseignement-response" *ngIf="renseignement.descriptionReponRens">
+                <h6>💬 Réponse:</h6>
+                <p>{{ renseignement.descriptionReponRens }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

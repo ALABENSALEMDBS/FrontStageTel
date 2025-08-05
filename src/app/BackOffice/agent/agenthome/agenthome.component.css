@@ -660,6 +660,18 @@
   transform: none !important;
 }
 
+.resolved-btn {
+  background: #28a745 !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  opacity: 0.8;
+}
+
+.resolved-btn:hover {
+  background: #28a745 !important;
+  transform: none !important;
+}
+
 /* Bouton de rejet */
 .action-button.delete-button {
   display: flex;
@@ -1794,11 +1806,19 @@
   flex-wrap: wrap;
 }
 
+.filters-grid {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-width: 200px;
+  min-width: 180px;
+  flex: 1;
 }
 
 .filter-group label {
@@ -1827,6 +1847,25 @@
 .filter-actions {
   display: flex;
   gap: 0.5rem;
+  align-items: end;
+  min-width: 180px;
+}
+
+.btn-filter-clear {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-filter-clear:hover {
+  background: #545b62;
+  transform: translateY(-2px);
 }
 
 .clear-filters-btn {
@@ -3744,5 +3783,391 @@
   
   .related-reclamations-list {
     max-height: 300px;
+  }
+}
+
+/* =================== STYLES RENSEIGNEMENTS AGENT =================== */
+
+/* Modal des renseignements agent */
+.renseignements-list-modal {
+  width: 95%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.renseignements-list-content {
+  margin-top: 1.5rem;
+}
+
+.renseignements-summary {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 10px;
+  border-left: 4px solid #2196f3;
+}
+
+.renseignements-summary h4 {
+  margin: 0;
+  color: #1976d2;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Grille des renseignements */
+.renseignements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Carte de renseignement */
+.renseignement-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.renseignement-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.renseignement-card.resolved {
+  border-left: 4px solid #28a745;
+  background: linear-gradient(135deg, #f8fff8, #f0fff0);
+}
+
+/* En-tête du renseignement */
+.renseignement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.renseignement-id {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #495057;
+  font-family: 'Courier New', monospace;
+}
+
+.renseignement-status {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.renseignement-status.status-resolved {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.renseignement-status.status-pending {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Contenu du renseignement */
+.renseignement-content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.renseignement-client,
+.renseignement-email,
+.renseignement-subject,
+.renseignement-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.renseignement-client strong,
+.renseignement-email strong,
+.renseignement-subject strong,
+.renseignement-date strong {
+  color: #495057;
+  min-width: 60px;
+}
+
+.renseignement-message {
+  padding: 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 10px;
+  border-left: 4px solid #2196f3;
+}
+
+.renseignement-message strong {
+  color: #1976d2;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.message-content {
+  margin: 0.5rem 0 0 0;
+  color: #37474f;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+/* Réponse du renseignement */
+.renseignement-response {
+  padding: 1rem;
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border-radius: 10px;
+  border-left: 4px solid #28a745;
+  margin-top: 0.5rem;
+}
+
+.renseignement-response strong {
+  color: #155724;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.response-content {
+  margin: 0.5rem 0 0 0;
+  color: #155724;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.response-date {
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.response-date small {
+  color: #6c757d;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Actions du renseignement */
+.renseignement-actions {
+  padding: 1rem 1.25rem;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-respond {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-respond:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.btn-view-resolved {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: not-allowed;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Modal de réponse aux renseignements */
+.response-modal {
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.renseignement-details {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #dee2e6;
+}
+
+.renseignement-details h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.detail-item {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.detail-item strong {
+  color: #495057;
+  margin-right: 0.5rem;
+}
+
+.question-content {
+  margin: 0.5rem 0 0 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+  color: #37474f;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.response-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+}
+
+.response-form h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-textarea.error {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+/* États vides et chargement pour renseignements */
+.empty-state .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+/* Responsive pour renseignements */
+@media (max-width: 1200px) {
+  .renseignements-grid {
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .renseignements-list-modal {
+    width: 98%;
+    margin: 1rem;
+  }
+  
+  .renseignements-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .renseignement-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .renseignement-actions {
+    flex-direction: column;
+  }
+  
+  .btn-respond,
+  .btn-view-resolved {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .response-modal {
+    width: 95%;
+    margin: 2.5% auto;
+  }
+  
+  .renseignement-details,
+  .response-form {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .renseignements-grid {
+    gap: 0.75rem;
+  }
+  
+  .renseignement-card {
+    margin: 0;
+  }
+  
+  .renseignement-content {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .message-content,
+  .response-content,
+  .question-content {
+    padding: 0.75rem;
+    font-size: 0.85rem;
   }
 }

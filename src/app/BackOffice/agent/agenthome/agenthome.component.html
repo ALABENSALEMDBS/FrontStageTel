@@ -234,7 +234,7 @@
           <div class="work-header">
             <h3 class="work-title">
               <span class="work-icon">💬</span>
-              Renseignements Récents
+              5 Renseignements Récents
             </h3>
             <button class="view-all-btn" (click)="navigateToRenseignements()">Voir tout</button>
           </div>
@@ -257,9 +257,21 @@
                   <span class="btn-icon">👁️</span>
                   Consulter
                 </button>
-                <button class="action-btn respond-btn" (click)="respondToRenseignement(renseignement)">
+                <button 
+                  *ngIf="renseignement.statut !== 'Résolu'"
+                  class="action-btn respond-btn" 
+                  (click)="respondToRenseignement(renseignement)"
+                >
                   <span class="btn-icon">💬</span>
                   Répondre
+                </button>
+                <button 
+                  *ngIf="renseignement.statut === 'Résolu'"
+                  class="action-btn resolved-btn" 
+                  disabled
+                >
+                  <span class="btn-icon">✅</span>
+                  Résolu
                 </button>
 
             
@@ -1160,6 +1172,234 @@
   </div>
 </div>
 
+
+
+<!-- Modal Renseignements Agent -->
+<div class="modal-overlay" [class.show]="isRenseignementsModalOpen" (click)="closeRenseignementsModal()">
+  <div class="modal-content renseignements-list-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">💬 Gestion des Renseignements</h3>
+      <button class="modal-close" (click)="closeRenseignementsModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Filtres -->
+      <div class="filters-section">
+        <h4 class="filters-title">🔍 Filtrer les renseignements</h4>
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="filterIdRens">ID Renseignement :</label>
+            <input 
+              type="text" 
+              id="filterIdRens"
+              [(ngModel)]="filterIdRens" 
+              (input)="onRenseignementsFilterChange()"
+              placeholder="Rechercher par ID..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterSujetRens">Sujet :</label>
+            <select 
+              id="filterSujetRens"
+              [(ngModel)]="filterSujetRens" 
+              (change)="onRenseignementsFilterChange()"
+              class="filter-select"
+            >
+              <option *ngFor="let option of sujetRensOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterEmailClientRens">Email Client :</label>
+            <input 
+              type="text" 
+              id="filterEmailClientRens"
+              [(ngModel)]="filterEmailClientRens" 
+              (input)="onRenseignementsFilterChange()"
+              placeholder="Rechercher par email..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-actions">
+            <button class="btn-filter-clear" (click)="clearRenseignementsFilters()">
+              🗑️ Effacer les filtres
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Liste des renseignements -->
+      <div class="renseignements-list-content">
+        <div *ngIf="isLoadingRenseignements" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Chargement des renseignements...</p>
+        </div>
+        
+        <div *ngIf="!isLoadingRenseignements && filteredRenseignementsList.length === 0" class="empty-state">
+          <div class="empty-icon">💬</div>
+          <h3>Aucun renseignement trouvé</h3>
+          <p>Aucun renseignement ne correspond aux critères de recherche.</p>
+        </div>
+        
+        <div *ngIf="!isLoadingRenseignements && filteredRenseignementsList.length > 0">
+          <div class="renseignements-summary">
+            <h4>📊 {{ filteredRenseignementsList.length }} renseignement(s) trouvé(s)</h4>
+          </div>
+          
+          <div class="renseignements-grid">
+            <div 
+              *ngFor="let renseignement of filteredRenseignementsList" 
+              class="renseignement-card"
+              [class.resolved]="renseignement.descriptionReponRens"
+            >
+              <div class="renseignement-header">
+                <div class="renseignement-id">
+                  <strong>REN-{{ renseignement.idRens }}</strong>
+                </div>
+                <div class="renseignement-status" 
+                     [ngClass]="getRenseignementStatusClass(renseignement)">
+                  {{ getRenseignementStatusLabel(renseignement) }}
+                </div>
+              </div>
+              
+              <div class="renseignement-content">
+                <div class="renseignement-client">
+                  <strong>👤 Client :</strong>
+                  <span *ngIf="renseignement.utilisateurRens">
+                    {{ (renseignement.utilisateurRens.prenomUser || renseignement.utilisateurRens.prenom || 'Prénom') + ' ' + (renseignement.utilisateurRens.nomUser || renseignement.utilisateurRens.nom || 'Nom') }}
+                  </span>
+                  <span *ngIf="!renseignement.utilisateurRens">Client inconnu</span>
+                </div>
+                
+                <div class="renseignement-email" *ngIf="renseignement.utilisateurRens?.emailUser || renseignement.utilisateurRens?.email">
+                  <strong>📧 Email :</strong> {{ renseignement.utilisateurRens.emailUser || renseignement.utilisateurRens.email }}
+                </div>
+                
+                <div class="renseignement-subject">
+                  <strong>📝 Sujet :</strong> {{ getSujetRensLabel(renseignement.sujetRens) }}
+                </div>
+                
+                <div class="renseignement-date">
+                  <strong>📅 Date :</strong> {{ formatDate(renseignement.dateRens) }}
+                </div>
+                
+                <div class="renseignement-message">
+                  <strong>💬 Question :</strong>
+                  <p class="message-content">{{ renseignement.descriptionRens }}</p>
+                </div>
+                
+                <div *ngIf="renseignement.descriptionReponRens" class="renseignement-response">
+                  <strong>✅ Réponse :</strong>
+                  <p class="response-content">{{ renseignement.descriptionReponRens }}</p>
+                  <div class="response-date" *ngIf="renseignement.dateReponRens">
+                    <small>Répondu le : {{ formatDate(renseignement.dateReponRens) }}</small>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="renseignement-actions">
+                <button 
+                  *ngIf="!renseignement.descriptionReponRens"
+                  class="btn-respond" 
+                  (click)="respondToRenseignement(renseignement)"
+                >
+                  💬 Répondre
+                </button>
+                <button 
+                  *ngIf="renseignement.descriptionReponRens"
+                  class="btn-view-resolved" 
+                  disabled
+                >
+                  ✅ Résolu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeRenseignementsModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de réponse aux renseignements -->
+<div class="modal-overlay" [class.show]="isRenseignementResponseModalOpen" (click)="closeRenseignementResponseModal()">
+  <div class="modal-content response-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">💬 Répondre au Renseignement</h3>
+      <button class="modal-close" (click)="closeRenseignementResponseModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedRenseignementForResponse">
+      <form [formGroup]="renseignementResponseForm" (ngSubmit)="onSubmitRenseignementResponse()">
+        <!-- Détails du renseignement -->
+        <div class="renseignement-details">
+          <h4>📋 Détails du renseignement</h4>
+          <div class="detail-item">
+            <strong>ID :</strong> REN-{{ selectedRenseignementForResponse.idRens }}
+          </div>
+          <div class="detail-item" *ngIf="selectedRenseignementForResponse.utilisateurRens">
+            <strong>Client :</strong> 
+            {{ (selectedRenseignementForResponse.utilisateurRens.prenomUser || selectedRenseignementForResponse.utilisateurRens.prenom || 'Prénom') + ' ' + (selectedRenseignementForResponse.utilisateurRens.nomUser || selectedRenseignementForResponse.utilisateurRens.nom || 'Nom') }}
+          </div>
+          <div class="detail-item">
+            <strong>Sujet :</strong> {{ getSujetRensLabel(selectedRenseignementForResponse.sujetRens) }}
+          </div>
+          <div class="detail-item">
+            <strong>Question :</strong>
+            <p class="question-content">{{ selectedRenseignementForResponse.descriptionRens }}</p>
+          </div>
+        </div>
+        
+        <!-- Formulaire de réponse -->
+        <div class="response-form">
+          <h4>✍️ Votre réponse</h4>
+          <div class="form-group">
+            <label for="reponseRenseignement">Réponse * :</label>
+            <textarea 
+              id="reponseRenseignement"
+              formControlName="reponseRenseignement"
+              rows="6"
+              placeholder="Saisissez votre réponse détaillée..."
+              class="form-textarea"
+              [class.error]="renseignementResponseForm.get('reponseRenseignement')?.invalid && renseignementResponseForm.get('reponseRenseignement')?.touched"
+            ></textarea>
+            <div 
+              *ngIf="renseignementResponseForm.get('reponseRenseignement')?.invalid && renseignementResponseForm.get('reponseRenseignement')?.touched" 
+              class="error-message"
+            >
+              La réponse doit contenir au moins 10 caractères.
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeRenseignementResponseModal()">
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            class="btn-primary"
+            [disabled]="renseignementResponseForm.invalid || isSubmittingRenseignementResponse"
+          >
+            <span *ngIf="isSubmittingRenseignementResponse">🔄 Envoi...</span>
+            <span *ngIf="!isSubmittingRenseignementResponse">📤 Envoyer la réponse</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 
 <!-- Modal de confirmation de suppression -->
