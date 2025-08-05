@@ -57,6 +57,10 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   responseForm: FormGroup;
   isSubmittingResponse = false;
   
+  // Variables pour les réclamations liées (même utilisateur et numéro)
+  relatedReclamationsList: any[] = [];
+  isLoadingRelatedReclamations = false;
+  
   // Variables pour le modal de statistiques agent
   isAgentStatsModalOpen = false;
   agentStatsData: any = {
@@ -684,8 +688,49 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     this.responseForm.reset();
     this.isResponseModalOpen = true;
     
+    // Charger les réclamations liées (même utilisateur et numéro)
+    this.loadRelatedReclamations(reclamation);
+    
     // Mettre immédiatement la réclamation en cours même si l'agent n'écrit pas de réponse
     this.mettreReclamationEnCours(reclamation);
+  }
+
+  // Méthode pour charger les réclamations liées
+  loadRelatedReclamations(reclamation: any) {
+    if (!reclamation.utilisateurRecl?.emailUser || !reclamation.numeroConcerne) {
+      console.log('Impossible de charger les réclamations liées: données manquantes');
+      this.relatedReclamationsList = [];
+      return;
+    }
+
+    this.isLoadingRelatedReclamations = true;
+    const email = reclamation.utilisateurRecl.emailUser;
+    const numeroConcerne = reclamation.numeroConcerne;
+
+    console.log('📋 Chargement des réclamations liées pour:', email, 'et numéro:', numeroConcerne);
+
+    this.gestionReclamationService.getReclamationsByUserAndNumero(email, numeroConcerne).subscribe({
+      next: (response: any[]) => {
+        console.log('✅ Réclamations liées chargées:', response);
+        // Filtrer pour exclure la réclamation actuelle
+        this.relatedReclamationsList = response.filter(r => 
+          r.idRecl !== reclamation.idRecl && r.idRecl !== reclamation.id
+        );
+        this.isLoadingRelatedReclamations = false;
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors du chargement des réclamations liées:', error);
+        this.relatedReclamationsList = [];
+        this.isLoadingRelatedReclamations = false;
+        
+        let errorMessage = 'Erreur lors du chargement des réclamations liées';
+        if (error.status === 404) {
+          console.log('Aucune réclamation liée trouvée');
+        } else {
+          this.notificationService.showError(errorMessage, 3000);
+        }
+      }
+    });
   }
 
   // Méthode pour mettre une réclamation en cours
@@ -714,6 +759,8 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   closeResponseModal() {
     this.isResponseModalOpen = false;
     this.selectedReclamationForResponse = null;
+    this.relatedReclamationsList = [];
+    this.isLoadingRelatedReclamations = false;
     this.responseForm.reset();
     this.isSubmittingResponse = false;
   }
@@ -1008,6 +1055,47 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
     gradient += ')';
     return gradient;
+  }
+
+  // Méthodes utilitaires pour les réclamations liées
+  getTypeReclLabelForRelated(type: string): string {
+    const typeReclOptions = [
+      { value: 'Mon_compte_MY_TT', label: 'Mon compte MY TT' },
+      { value: 'Mon_Mobile', label: 'Mon Mobile' },
+      { value: 'Internet_Mobile', label: 'Internet Mobile' },
+      { value: 'Mon_Fixe', label: 'Mon Fixe' },
+      { value: 'Service_e_Facture', label: 'Service e-Facture' }
+    ];
+    
+    const option = typeReclOptions.find(opt => opt.value === type);
+    return option ? option.label : type;
+  }
+
+  getEtatReclLabelForRelated(etat: string): string {
+    const option = this.etatReclOptions.find(opt => opt.value === etat);
+    return option ? option.label : etat;
+  }
+
+  getEtatReclClassForRelated(etat: string): string {
+    switch (etat) {
+      case 'EN_ATTENTE': return 'status-pending';
+      case 'EN_COURS': return 'status-in-progress';
+      case 'TRAITEE': return 'status-resolved';
+      case 'REJETEE': return 'status-closed';
+      default: return 'status-unknown';
+    }
+  }
+
+  formatDateForRelated(dateString: string): string {
+    if (!dateString) return 'Non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
   
 }

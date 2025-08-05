@@ -53,4 +53,9 @@ export class GestionreclamationService {
   modifierReclamation(id: number, reclamation: Reclamation): Observable<any> {
     return this.http.put(`${this.baseUrl}/modifierRecl/${id}`, reclamation);
   }
+
+
+   getReclamationsByUserAndNumero(email: string, numeroConcerne: number): Observable<Reclamation[]> {
+    return this.http.get<Reclamation[]>(`${this.baseUrl}/by-user/${email}/${numeroConcerne}`);
+  }
 }
