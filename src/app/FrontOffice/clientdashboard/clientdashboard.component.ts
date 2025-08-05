@@ -6,7 +6,9 @@ import jsPDF from 'jspdf';
 import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../core/models/ChangePhoto';
 import { Reclamation, TypeRecl } from '../../../core/models/Reclamation';
+import { Renseignement } from '../../../core/models/Renseignement';
 import { GestionreclamationService } from '../../services/gestionReclamationService/gestionreclamation.service';
+import { GestionRenseignementService } from '../../services/gestionRenseignementService/gestion-renseignement.service';
 import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../services/notification.service';
 import { UserStateService } from '../../services/user-state.service';
@@ -131,6 +133,35 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   // Options actuelles pour le dropdown sujet
   currentSujetReclOptions: string[] = []
 
+  // Variables pour le modal de renseignement
+  isRenseignementModalOpen = false
+  renseignementForm: FormGroup
+  isSubmittingRenseignement = false
+
+  // Variables pour le modal de liste des renseignements
+  isRenseignementsListModalOpen = false
+  renseignementsList: any[] = []
+  filteredRenseignementsList: any[] = []
+  isLoadingRenseignements = false
+
+  // Variables pour les filtres des renseignements
+  filterIdRens = ''
+  filterSujetRens = ''
+
+  // Options pour les sujets de renseignement
+  sujetRenseignementOptions: string[] = [
+    'Identité Numérique e-Houwiya',
+    'Internet Mobile',
+    'Fixe',
+    'Mobile',
+    'Application MY TT',
+    'Linkedin',
+    'Youtube',
+    'Twitter X',
+    'FB/Messenger',
+    'Portail'
+  ]
+
   services = [
     {
       icon: "📱",
@@ -176,7 +207,7 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     }
   ]
 
-  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private gestionReclamationService: GestionreclamationService, private userStateService: UserStateService, private notificationService: NotificationService) {
+  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private gestionReclamationService: GestionreclamationService, private gestionRenseignementService: GestionRenseignementService, private userStateService: UserStateService, private notificationService: NotificationService) {
     // Initialiser le formulaire de changement de mot de passe
     this.changePasswordForm = this.fb.group({
       oldPassword: ['', [Validators.required]],
@@ -198,6 +229,12 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       sujetRecl: ['', [Validators.required]],
       numeroConcerne: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
       descriptionRecl: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
+    });
+
+    // Initialiser le formulaire de renseignement
+    this.renseignementForm = this.fb.group({
+      sujetRens: ['', [Validators.required]],
+      descriptionRens: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
     });
   }
 
@@ -225,9 +262,10 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     // S'abonner aux changements d'état de l'utilisateur
     this.userStateService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      // Charger les réclamations lorsque l'utilisateur est disponible
+      // Charger les réclamations et renseignements lorsque l'utilisateur est disponible
       if (user && user.idUser) {
         this.loadReclamationsCount();
+        this.loadRenseignementsCount();
       }
     });
     
@@ -235,8 +273,9 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     if (!this.gestionUserService.isAuthenticated() || !this.currentUser) {
       this.router.navigate(['/login']);
     } else if (this.currentUser && this.currentUser.idUser) {
-      // Charger le nombre de réclamations immédiatement si l'utilisateur est déjà disponible
+      // Charger le nombre de réclamations et renseignements immédiatement si l'utilisateur est déjà disponible
       this.loadReclamationsCount();
+      this.loadRenseignementsCount();
     }
   }
 
@@ -273,8 +312,164 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   }
 
   openRenseignement() {
-    console.log("Open renseignement") 
-    // Implement renseignement functionality
+    this.isRenseignementModalOpen = true;
+    // Réinitialiser le formulaire
+    this.renseignementForm.reset();
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+    console.log("💬 Modal renseignement ouvert");
+  }
+
+  closeRenseignementModal() {
+    this.isRenseignementModalOpen = false;
+    // Réinitialiser le formulaire
+    this.renseignementForm.reset();
+    this.isSubmittingRenseignement = false;
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log("❌ Modal renseignement fermé");
+  }
+
+  submitRenseignement() {
+    if (this.renseignementForm.valid && !this.isSubmittingRenseignement) {
+      this.isSubmittingRenseignement = true;
+      
+      // Créer l'objet renseignement
+      const renseignement = new Renseignement();
+      renseignement.sujetRens = this.renseignementForm.get('sujetRens')?.value;
+      renseignement.descriptionRens = this.renseignementForm.get('descriptionRens')?.value;
+      
+      console.log('💬 Soumission du renseignement:', renseignement);
+      
+      this.gestionRenseignementService.ajouterRenseignement(renseignement, this.currentUser.idUser).subscribe({
+        next: (response) => {
+          console.log('✅ Renseignement soumis avec succès:', response);
+          this.isSubmittingRenseignement = false;
+          
+          // Fermer le modal après soumission
+          this.closeRenseignementModal();
+          
+          // Mettre à jour le nombre de renseignements
+          this.loadRenseignementsCount();
+          
+          // Afficher une notification de succès
+          this.notificationService.showSuccess('Renseignement soumis avec succès !', 4000);
+        },
+        error: (error) => {
+          console.error('❌ Erreur lors de la soumission du renseignement:', error);
+          this.isSubmittingRenseignement = false;
+          
+          let errorMessage = 'Une erreur s\'est produite lors de la soumission du renseignement.';
+          if (error.status === 401) {
+            errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+          } else if (error.status === 403) {
+            errorMessage = 'Vous n\'avez pas les permissions pour créer un renseignement.';
+          }
+          
+          this.notificationService.showError(errorMessage, 5000);
+        }
+      });
+    } else {
+      // Marquer tous les champs comme touchés pour afficher les erreurs
+      Object.keys(this.renseignementForm.controls).forEach(key => {
+        this.renseignementForm.get(key)?.markAsTouched();
+      });
+      this.notificationService.showError('Veuillez remplir tous les champs obligatoires', 3000);
+    }
+  }
+
+  // ========== MÉTHODES POUR LA LISTE DES RENSEIGNEMENTS ==========
+
+  openRenseignementsListModal() {
+    this.isRenseignementsListModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    this.loadRenseignements();
+    console.log("💬 Modal liste des renseignements ouvert");
+  }
+
+  closeRenseignementsListModal() {
+    this.isRenseignementsListModalOpen = false;
+    document.body.style.overflow = 'auto';
+    // Réinitialiser les filtres
+    this.filterIdRens = '';
+    this.filterSujetRens = '';
+    console.log("❌ Modal liste des renseignements fermé");
+  }
+
+  loadRenseignements() {
+    if (!this.currentUser?.idUser) {
+      this.notificationService.showError('Utilisateur non identifié', 3000);
+      return;
+    }
+
+    this.isLoadingRenseignements = true;
+    console.log("💬 Chargement des renseignements pour l'utilisateur:", this.currentUser.idUser);
+
+    this.gestionRenseignementService.getRenseignementByUser(this.currentUser.idUser).subscribe({
+      next: (response: any) => {
+        console.log("✅ Renseignements chargés:", response);
+        this.renseignementsList = response || [];
+        this.applyRenseignementFilters();
+        this.isLoadingRenseignements = false;
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des renseignements:", error);
+        this.isLoadingRenseignements = false;
+        this.renseignementsList = [];
+        this.filteredRenseignementsList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des renseignements';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 404) {
+          errorMessage = 'Aucun renseignement trouvé';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  applyRenseignementFilters() {
+    this.filteredRenseignementsList = this.renseignementsList.filter(renseignement => {
+      const matchId = !this.filterIdRens || 
+        (renseignement.idRens && renseignement.idRens.toString().includes(this.filterIdRens));
+      const matchSujet = !this.filterSujetRens || 
+        (renseignement.sujetRens && renseignement.sujetRens.toLowerCase().includes(this.filterSujetRens.toLowerCase()));
+      
+      return matchId && matchSujet;
+    });
+    
+    console.log("🔍 Filtres renseignements appliqués:", {
+      total: this.renseignementsList.length,
+      filtered: this.filteredRenseignementsList.length,
+      filters: {
+        id: this.filterIdRens,
+        sujet: this.filterSujetRens
+      }
+    });
+  }
+
+  onRenseignementFilterChange() {
+    this.applyRenseignementFilters();
+  }
+
+  clearRenseignementFilters() {
+    this.filterIdRens = '';
+    this.filterSujetRens = '';
+    this.applyRenseignementFilters();
+  }
+
+  formatRenseignementDate(dateString: string): string {
+    if (!dateString) return 'Non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   // Gestion d'erreur d'image pour avatar par défaut
@@ -438,7 +633,7 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationModalOpen || this.isReclamationsListModalOpen || this.isDeleteConfirmationOpen || this.isPhotoModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationModalOpen || this.isReclamationsListModalOpen || this.isDeleteConfirmationOpen || this.isPhotoModalOpen || this.isRenseignementModalOpen || this.isRenseignementsListModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
@@ -1027,6 +1222,26 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       error: (error: any) => {
         console.error("❌ Erreur lors du chargement du nombre de réclamations:", error);
         this.reclamationsList = [];
+      }
+    });
+  }
+
+  // Méthode pour charger seulement le nombre de renseignements (pour l'affichage du dashboard)
+  loadRenseignementsCount() {
+    if (!this.currentUser?.idUser) {
+      return;
+    }
+
+    console.log("📊 Chargement du nombre de renseignements pour l'utilisateur:", this.currentUser.idUser);
+
+    this.gestionRenseignementService.getRenseignementByUser(this.currentUser.idUser).subscribe({
+      next: (response: any) => {
+        console.log("✅ Nombre de renseignements chargé:", response?.length || 0);
+        this.renseignementsList = response || [];
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement du nombre de renseignements:", error);
+        this.renseignementsList = [];
       }
     });
   }

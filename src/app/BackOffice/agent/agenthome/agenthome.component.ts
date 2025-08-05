@@ -1,4 +1,4 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,13 +6,14 @@ import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordReq
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
 import { Reclamation } from '../../../../core/models/Reclamation';
 import { GestionreclamationService } from '../../../services/gestionReclamationService/gestionreclamation.service';
+import { GestionRenseignementService } from '../../../services/gestionRenseignementService/gestion-renseignement.service';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
 import { UserStateService } from '../../../services/user-state.service';
 
 @Component({
   selector: 'app-agenthome',
-  imports: [NgFor, NgIf, ReactiveFormsModule, DatePipe, FormsModule],
+  imports: [NgFor, NgIf, NgClass, ReactiveFormsModule, DatePipe, FormsModule],
   templateUrl: './agenthome.component.html',
   styleUrl: './agenthome.component.css'
 })
@@ -39,6 +40,38 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
   // Variables pour la mise à jour de la photo
   isUpdatingPhoto = false;
+
+  // Variables pour le modal des renseignements agent
+  isRenseignementsModalOpen = false;
+  renseignementsList: any[] = [];
+  filteredRenseignementsList: any[] = [];
+  isLoadingRenseignements = false;
+  
+  // Variables pour les filtres des renseignements agent
+  filterIdRens = '';
+  filterSujetRens = '';
+  filterEmailClientRens = '';
+  
+  // Variables pour le modal de réponse aux renseignements
+  isRenseignementResponseModalOpen = false;
+  selectedRenseignementForResponse: any = null;
+  renseignementResponseForm: FormGroup;
+  isSubmittingRenseignementResponse = false;
+  
+  // Options pour les filtres des renseignements agent
+  sujetRensOptions = [
+    { value: '', label: 'Tous les sujets' },
+    { value: 'Identité Numérique e-Houwiya', label: 'Identité Numérique e-Houwiya' },
+    { value: 'Internet Mobile', label: 'Internet Mobile' },
+    { value: 'Fixe', label: 'Fixe' },
+    { value: 'Mobile', label: 'Mobile' },
+    { value: 'Application MY TT', label: 'Application MY TT' },
+    { value: 'Linkedin', label: 'Linkedin' },
+    { value: 'Youtube', label: 'Youtube' },
+    { value: 'Twitter X', label: 'Twitter X' },
+    { value: 'FB/Messenger', label: 'FB/Messenger' },
+    { value: 'Portail', label: 'Portail' }
+  ];
 
   // Variables pour le modal des réclamations agent
   isReclamationsModalOpen = false;
@@ -97,12 +130,33 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     reclamationsEnCours: 0,
     reclamationsResolues: 0,
     reclamationsEnAttente: 0,
-    totalRenseignements: 67,
-    renseignementsEnCours: 8,
-    renseignementsResolus: 59,
+    totalRenseignements: 0,
+    renseignementsEnCours: 0,
+    renseignementsResolus: 0,
     tauxResolution: '92%',
     tempsResponseMoyen: '2.5h'
   };
+
+  // Propriété calculée pour récupérer les renseignements récents (les 5 derniers)
+  get recentRenseignements(): any[] {
+    return this.renseignementsList
+      .sort((a, b) => new Date(b.dateRens).getTime() - new Date(a.dateRens).getTime())
+      .slice(0, 5)
+      .map(renseignement => ({
+        // Conserver toutes les données originales pour le modal de réponse
+        ...renseignement,
+        // Ajouter les propriétés calculées pour l'affichage
+        id: renseignement.idRens,
+        client: renseignement.utilisateurRens ? 
+          `${renseignement.utilisateurRens.prenomUser || renseignement.utilisateurRens.prenom || 'Prénom'} ${renseignement.utilisateurRens.nomUser || renseignement.utilisateurRens.nom || 'Nom'}` : 
+          'Client inconnu',
+        type: renseignement.sujetRens || 'Non spécifié',
+        statut: renseignement.descriptionReponRens ? 'Résolu' : 'En cours',
+        dateCreation: this.formatDate(renseignement.dateRens),
+        question: renseignement.descriptionRens || 'Aucun message',
+        statutColor: renseignement.descriptionReponRens ? '#28a745' : '#fd7e14'
+      }));
+  }
 
   // Propriété calculée pour récupérer les réclamations récentes (les 3 dernières)
   get recentReclamations(): any[] {
@@ -146,39 +200,12 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Renseignements récents (exemple)
-  recentRenseignements = [
-    {
-      id: 'REN001',
-      client: 'Salma Bouaziz',
-      type: 'Tarifs ADSL',
-      statut: 'En cours',
-      dateCreation: '2025-01-20',
-      question: 'Quels sont les tarifs pour ADSL 20 Mbps?'
-    },
-    {
-      id: 'REN002',
-      client: 'Karim Sassi',
-      type: 'Couverture réseau',
-      statut: 'Nouveau',
-      dateCreation: '2025-01-20',
-      question: 'Est-ce que la fibre est disponible dans ma région?'
-    },
-    {
-      id: 'REN003',
-      client: 'Amina Gharbi',
-      type: 'Services mobiles',
-      statut: 'Résolu',
-      dateCreation: '2025-01-19',
-      question: 'Comment activer le roaming international?'
-    }
-  ];
-
   constructor(
     private router: Router,
     private fb: FormBuilder,
     private gestionUserService: GestionuserService,
     private gestionReclamationService: GestionreclamationService,
+    private gestionRenseignementService: GestionRenseignementService,
     private userStateService: UserStateService,
     private notificationService: NotificationService
   ) {
@@ -192,6 +219,11 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     // Initialiser le formulaire de réponse aux réclamations
     this.responseForm = this.fb.group({
       descriptionReponRecl: ['', [Validators.required, Validators.minLength(10)]]
+    });
+
+    // Initialiser le formulaire de réponse aux renseignements
+    this.renseignementResponseForm = this.fb.group({
+      reponseRenseignement: ['', [Validators.required, Validators.minLength(10)]]
     });
   }
 
@@ -226,6 +258,44 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
     // Charger les réclamations réelles
     this.loadReclamations();
+    
+    // Charger les renseignements réels
+    this.loadRenseignements();
+  }
+
+  /**
+   * Charge tous les renseignements pour l'agent
+   */
+  loadRenseignements(): void {
+    this.gestionRenseignementService.getAllRenseignements().subscribe({
+      next: (data) => {
+        this.renseignementsList = data || [];
+        // Mettre à jour les statistiques avec les vraies données
+        this.updateRenseignementsStatsFromRealData();
+        console.log("✅ Renseignements chargés pour l'agent:", this.renseignementsList);
+      },
+      error: (error) => {
+        console.error("❌ Erreur lors du chargement des renseignements:", error);
+        this.renseignementsList = [];
+        this.notificationService.showError('Erreur lors du chargement des renseignements', 4000);
+      }
+    });
+  }
+
+  /**
+   * Met à jour les statistiques des renseignements avec les vraies données
+   */
+  updateRenseignementsStatsFromRealData(): void {
+    const total = this.renseignementsList.length;
+    const enCours = this.renseignementsList.filter(r => !r.descriptionReponRens).length;
+    const resolus = this.renseignementsList.filter(r => r.descriptionReponRens).length;
+
+    this.agentStats = {
+      ...this.agentStats,
+      totalRenseignements: total,
+      renseignementsEnCours: enCours,
+      renseignementsResolus: resolus
+    };
   }
 
   /**
@@ -655,9 +725,9 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
   }
 
   navigateToRenseignements() {
-    console.log("Navigation vers gestion renseignements");
+    console.log("Ouverture du modal des renseignements agent");
+    this.openRenseignementsModal();
     this.closeMobileMenu();
-    // Implémenter la navigation
   }
 
   navigateToReports() {
@@ -880,14 +950,172 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
 
   // Méthodes pour la gestion des renseignements
+
+  // Méthodes pour le modal des renseignements agent
+  openRenseignementsModal() {
+    this.isRenseignementsModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    this.loadAllRenseignementsForModal();
+    console.log("Modal renseignements agent ouvert");
+  }
+
+  closeRenseignementsModal() {
+    this.isRenseignementsModalOpen = false;
+    document.body.style.overflow = 'auto';
+    // Réinitialiser les filtres
+    this.filterIdRens = '';
+    this.filterSujetRens = '';
+    this.filterEmailClientRens = '';
+    console.log("Modal renseignements agent fermé");
+  }
+
+  loadAllRenseignementsForModal() {
+    this.isLoadingRenseignements = true;
+    console.log("📋 Chargement de tous les renseignements pour l'agent...");
+
+    this.gestionRenseignementService.getAllRenseignements().subscribe({
+      next: (response: any) => {
+        console.log("✅ Renseignements chargés pour le modal agent:", response);
+        this.renseignementsList = response || [];
+        this.applyRenseignementsFilters();
+        this.isLoadingRenseignements = false;
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des renseignements:", error);
+        this.isLoadingRenseignements = false;
+        this.renseignementsList = [];
+        this.filteredRenseignementsList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des renseignements';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les permissions pour voir les renseignements.';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  applyRenseignementsFilters() {
+    this.filteredRenseignementsList = this.renseignementsList.filter(renseignement => {
+      const matchId = !this.filterIdRens || renseignement.idRens.toString().includes(this.filterIdRens);
+      const matchSujet = !this.filterSujetRens || renseignement.sujetRens === this.filterSujetRens;
+      const matchEmail = !this.filterEmailClientRens || 
+        (renseignement.utilisateurRens?.emailUser && 
+         renseignement.utilisateurRens.emailUser.toLowerCase().includes(this.filterEmailClientRens.toLowerCase())) ||
+        (renseignement.utilisateurRens?.email && 
+         renseignement.utilisateurRens.email.toLowerCase().includes(this.filterEmailClientRens.toLowerCase()));
+      
+      return matchId && matchSujet && matchEmail;
+    });
+    
+    console.log("🔍 Filtres appliqués sur les renseignements agent:", {
+      total: this.renseignementsList.length,
+      filtered: this.filteredRenseignementsList.length,
+      filters: {
+        id: this.filterIdRens,
+        sujet: this.filterSujetRens,
+        email: this.filterEmailClientRens
+      }
+    });
+  }
+
+  onRenseignementsFilterChange() {
+    this.applyRenseignementsFilters();
+  }
+
+  clearRenseignementsFilters() {
+    this.filterIdRens = '';
+    this.filterSujetRens = '';
+    this.filterEmailClientRens = '';
+    this.applyRenseignementsFilters();
+  }
+
+  getSujetRensLabel(sujet: string): string {
+    const option = this.sujetRensOptions.find(opt => opt.value === sujet);
+    return option ? option.label : sujet;
+  }
+
+  getRenseignementStatusClass(renseignement: any): string {
+    return renseignement.descriptionReponRens ? 'status-resolved' : 'status-pending';
+  }
+
+  getRenseignementStatusLabel(renseignement: any): string {
+    return renseignement.descriptionReponRens ? 'Résolu' : 'En attente';
+  }
+
   viewRenseignement(renseignement: any) {
-    console.log("Consulter renseignement:", renseignement);
-    // Implémenter l'affichage détaillé du renseignement
+    console.log("Consultation du renseignement:", renseignement);
+    // Pré-remplir le filtre avec l'ID du renseignement sélectionné
+    // Gérer les deux formats : id (depuis recentRenseignements) et idRens (depuis la liste complète)
+    const renseignementId = renseignement.idRens || renseignement.id;
+    this.filterIdRens = renseignementId ? renseignementId.toString() : '';
+    // Réinitialiser les autres filtres
+    this.filterSujetRens = '';
+    this.filterEmailClientRens = '';
+    // Ouvrir le modal
+    this.openRenseignementsModal();
   }
 
   respondToRenseignement(renseignement: any) {
-    console.log("Répondre au renseignement:", renseignement);
-    // Implémenter la réponse au renseignement
+    this.selectedRenseignementForResponse = renseignement;
+    this.renseignementResponseForm.reset();
+    this.isRenseignementResponseModalOpen = true;
+    console.log("Réponse au renseignement:", renseignement);
+  }
+
+  // Fermer le modal de réponse aux renseignements
+  closeRenseignementResponseModal() {
+    this.isRenseignementResponseModalOpen = false;
+    this.selectedRenseignementForResponse = null;
+    this.renseignementResponseForm.reset();
+    this.isSubmittingRenseignementResponse = false;
+  }
+
+  // Soumettre la réponse au renseignement
+  onSubmitRenseignementResponse() {
+    if (this.renseignementResponseForm.invalid || !this.selectedRenseignementForResponse) {
+      return;
+    }
+
+    this.isSubmittingRenseignementResponse = true;
+    
+    // Gérer les deux formats : idRens (depuis la liste complète) et id (depuis recentRenseignements)
+    const renseignementId = this.selectedRenseignementForResponse.idRens || this.selectedRenseignementForResponse.id;
+    const reponse = this.renseignementResponseForm.get('reponseRenseignement')?.value;
+
+    // Créer l'objet renseignement complet avec la réponse
+    const renseignementToUpdate = {
+      ...this.selectedRenseignementForResponse,
+      descriptionReponRens: reponse,
+      dateReponRens: new Date()
+    };
+
+    this.gestionRenseignementService.repondreRenseignement(renseignementId, renseignementToUpdate).subscribe({
+      next: (response) => {
+        console.log('Réponse au renseignement envoyée:', response);
+        // Mettre à jour l'état local du renseignement
+        const index = this.renseignementsList.findIndex(r => r.idRens === renseignementId);
+        if (index !== -1) {
+          this.renseignementsList[index].descriptionReponRens = reponse;
+          this.renseignementsList[index].dateReponRens = new Date();
+          this.applyRenseignementsFilters();
+        }
+        
+        // Mettre à jour les statistiques
+        this.updateRenseignementsStatsFromRealData();
+        
+        this.notificationService.showSuccess('Réponse envoyée avec succès');
+        this.closeRenseignementResponseModal();
+      },
+      error: (error) => {
+        console.error('Erreur lors de l\'envoi de la réponse au renseignement:', error);
+        this.notificationService.showError('Erreur lors de l\'envoi de la réponse');
+        this.isSubmittingRenseignementResponse = false;
+      }
+    });
   }
 
   // Méthodes utilitaires
