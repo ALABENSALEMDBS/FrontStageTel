@@ -843,6 +843,84 @@
             Vous pouvez rédiger une réponse pour marquer la réclamation comme traitée.
           </div>
         </div>
+
+        <!-- Section des réclamations liées -->
+        <div class="related-reclamations-section" *ngIf="selectedReclamationForResponse?.utilisateurRecl?.emailUser && selectedReclamationForResponse?.numeroConcerne">
+          <h4 class="related-title">
+            <span class="related-icon">🔗</span>
+            Autres réclamations de ce client pour le numéro {{ selectedReclamationForResponse.numeroConcerne }}
+          </h4>
+          
+          <!-- Loading des réclamations liées -->
+          <div class="related-loading" *ngIf="isLoadingRelatedReclamations">
+            <div class="loading-spinner"></div>
+            <p>Chargement des réclamations liées...</p>
+          </div>
+          
+          <!-- Liste des réclamations liées -->
+          <div class="related-reclamations-list" *ngIf="!isLoadingRelatedReclamations">
+            <!-- Message si aucune réclamation liée -->
+            <div class="no-related-reclamations" *ngIf="relatedReclamationsList.length === 0">
+              <div class="no-data-icon">📭</div>
+              <p>Aucune autre réclamation trouvée pour ce client et ce numéro.</p>
+            </div>
+            
+            <!-- Cartes des réclamations liées -->
+            <div class="related-reclamations-grid" *ngIf="relatedReclamationsList.length > 0">
+              <div class="related-count-info">
+                <strong>{{ relatedReclamationsList.length }}</strong> autre(s) réclamation(s) trouvée(s)
+              </div>
+              
+              <div class="related-reclamation-card" *ngFor="let relatedReclamation of relatedReclamationsList">
+                <div class="related-reclamation-header">
+                  <div class="related-reclamation-id">
+                    <span class="id-label">ID:</span>
+                    <span class="id-value">#{{ relatedReclamation.idRecl }}</span>
+                  </div>
+                  <div class="related-reclamation-status" [class]="getEtatReclClassForRelated(relatedReclamation.etatRecl)">
+                    {{ getEtatReclLabelForRelated(relatedReclamation.etatRecl) }}
+                  </div>
+                </div>
+                
+                <div class="related-reclamation-body">
+                  <div class="related-reclamation-type">
+                    <span class="type-icon">🏷️</span>
+                    <span class="type-text">{{ getTypeReclLabelForRelated(relatedReclamation.typeRecl) }}</span>
+                  </div>
+                  
+                  <!-- Sujet de la réclamation liée -->
+                  <div class="related-reclamation-sujet" *ngIf="relatedReclamation.sujetRecl">
+                    <div class="sujet-item">
+                      <span class="sujet-label">📋 Sujet:</span>
+                      <span class="sujet-value">{{ relatedReclamation.sujetRecl }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="related-reclamation-description">
+                    <p>{{ relatedReclamation.descriptionRecl }}</p>
+                  </div>
+                  
+                  <div class="related-reclamation-dates">
+                    <div class="date-item">
+                      <span class="date-label">📅 Créée le:</span>
+                      <span class="date-value">{{ formatDateForRelated(relatedReclamation.dateRecl) }}</span>
+                    </div>
+                    <div class="date-item" *ngIf="relatedReclamation.dateReponRecl">
+                      <span class="date-label">✅ Répondue le:</span>
+                      <span class="date-value">{{ formatDateForRelated(relatedReclamation.dateReponRecl) }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Réponse si disponible -->
+                  <div class="related-reclamation-response" *ngIf="relatedReclamation.descriptionReponRecl">
+                    <h6>💬 Réponse:</h6>
+                    <p>{{ relatedReclamation.descriptionReponRecl }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="modal-footer">
