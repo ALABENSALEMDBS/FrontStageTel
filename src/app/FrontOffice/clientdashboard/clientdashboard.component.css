@@ -4779,3 +4779,257 @@
 }
 
 /* ========== FIN STYLES LISTE RENSEIGNEMENTS ========== */
+
+/* ========== STYLES MODAL AVIS ========== */
+
+.avis-modal {
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.avis-modal .modal-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.avis-modal .modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avis-modal .modal-body {
+  padding: 2rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Section informations réclamation */
+.reclamation-info-section {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-left: 4px solid #f59e0b;
+}
+
+.reclamation-info-section .info-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.reclamation-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-value {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Formulaire d'avis */
+.avis-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Système d'étoiles */
+.star-rating-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.star-rating {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.star {
+  font-size: 2.5rem;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.star:hover,
+.star.filled {
+  color: #f59e0b;
+  transform: scale(1.1);
+}
+
+.star:hover ~ .star {
+  color: #d1d5db;
+  transform: scale(1);
+}
+
+/* Animation pour les étoiles */
+.star-rating:hover .star {
+  color: #d1d5db;
+  transform: scale(1);
+}
+
+.star-rating:hover .star:hover,
+.star-rating:hover .star:hover ~ .star {
+  color: #f59e0b;
+  transform: scale(1.1);
+}
+
+/* Étiquettes de notation */
+.rating-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.rating-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+  flex: 1;
+  min-width: 80px;
+}
+
+.rating-label.active {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  font-weight: 600;
+}
+
+/* Bouton d'avis dans les actions */
+.avis-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avis-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.avis-btn:disabled,
+.avis-btn.disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animation pour le bouton d'avis */
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.avis-btn .btn-icon {
+  animation: starPulse 2s infinite;
+}
+
+.avis-btn:hover .btn-icon {
+  animation: starPulse 0.5s infinite;
+}
+
+/* Responsive pour le modal d'avis */
+@media (max-width: 768px) {
+  .avis-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .avis-modal .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .reclamation-summary {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .star {
+    font-size: 2rem;
+  }
+  
+  .rating-labels {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .rating-label {
+    min-width: auto;
+    text-align: left;
+    padding: 0.25rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .avis-modal {
+    width: 95%;
+    margin: 0;
+  }
+  
+  .avis-modal .modal-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .avis-modal .modal-body {
+    padding: 1rem;
+  }
+  
+  .reclamation-info-section {
+    padding: 1rem;
+  }
+  
+  .star {
+    font-size: 1.75rem;
+  }
+}
+
+/* ========== FIN STYLES MODAL AVIS ========== */

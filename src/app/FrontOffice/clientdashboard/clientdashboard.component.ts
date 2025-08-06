@@ -3,10 +3,12 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import jsPDF from 'jspdf';
+import { Avis } from '../../../core/models/Avis';
 import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../core/models/ChangePhoto';
 import { Reclamation, TypeRecl } from '../../../core/models/Reclamation';
 import { Renseignement } from '../../../core/models/Renseignement';
+import { GestionavisService } from '../../services/gestionAvisService/gestionavis.service';
 import { GestionreclamationService } from '../../services/gestionReclamationService/gestionreclamation.service';
 import { GestionRenseignementService } from '../../services/gestionRenseignementService/gestion-renseignement.service';
 import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
@@ -162,6 +164,12 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     'Portail'
   ]
 
+  // Variables pour le modal d'avis
+  isAvisModalOpen = false
+  avisForm: FormGroup
+  isSubmittingAvis = false
+  currentReclamationForAvis: any = null
+
   services = [
     {
       icon: "📱",
@@ -207,7 +215,7 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     }
   ]
 
-  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private gestionReclamationService: GestionreclamationService, private gestionRenseignementService: GestionRenseignementService, private userStateService: UserStateService, private notificationService: NotificationService) {
+  constructor(private router: Router, private route: ActivatedRoute, private fb: FormBuilder, private gestionUserService: GestionuserService, private gestionReclamationService: GestionreclamationService, private gestionRenseignementService: GestionRenseignementService, private userStateService: UserStateService, private notificationService: NotificationService, private gestionAvisService: GestionavisService) {
     // Initialiser le formulaire de changement de mot de passe
     this.changePasswordForm = this.fb.group({
       oldPassword: ['', [Validators.required]],
@@ -235,6 +243,12 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     this.renseignementForm = this.fb.group({
       sujetRens: ['', [Validators.required]],
       descriptionRens: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
+    });
+
+    // Initialiser le formulaire d'avis
+    this.avisForm = this.fb.group({
+      note: ['', [Validators.required, Validators.min(1), Validators.max(5)]],
+      commentaire: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
     });
   }
 
@@ -633,7 +647,7 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationModalOpen || this.isReclamationsListModalOpen || this.isDeleteConfirmationOpen || this.isPhotoModalOpen || this.isRenseignementModalOpen || this.isRenseignementsListModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationModalOpen || this.isReclamationsListModalOpen || this.isDeleteConfirmationOpen || this.isPhotoModalOpen || this.isRenseignementModalOpen || this.isRenseignementsListModalOpen || this.isAvisModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
@@ -2114,6 +2128,125 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
       this.isEditingReclamation = false;
       this.notificationService.showError('Une erreur inattendue s\'est produite.', 4000);
     }
+  }
+
+  // ========== MÉTHODES POUR LES AVIS ==========
+
+  /**
+   * Vérifie si une réclamation peut recevoir un avis (seulement si elle est résolue/traitée)
+   */
+  canGiveAvis(reclamation: any): boolean {
+    return reclamation && reclamation.etatRecl === 'TRAITEE';
+  }
+
+  /**
+   * Ouvre le modal d'avis pour une réclamation
+   */
+  openAvisModal(reclamation: any) {
+    if (!this.canGiveAvis(reclamation)) {
+      this.notificationService.showError(
+        'Vous ne pouvez donner un avis que sur les réclamations résolues.', 
+        4000
+      );
+      return;
+    }
+
+    console.log("⭐ Ouverture du modal d'avis pour la réclamation:", reclamation.idRecl);
+    
+    this.currentReclamationForAvis = reclamation;
+    this.isAvisModalOpen = true;
+    
+    // Réinitialiser le formulaire
+    this.avisForm.reset();
+
+    // Bloquer le scroll de la page
+    document.body.style.overflow = 'hidden';
+  }
+
+  /**
+   * Ferme le modal d'avis
+   */
+  closeAvisModal() {
+    this.isAvisModalOpen = false;
+    this.currentReclamationForAvis = null;
+    this.avisForm.reset();
+    this.isSubmittingAvis = false;
+    
+    // Restaurer le scroll de la page
+    document.body.style.overflow = 'auto';
+    console.log("❌ Fermeture du modal d'avis");
+  }
+
+  /**
+   * Soumet l'avis
+   */
+  submitAvis() {
+    if (this.avisForm.invalid || this.isSubmittingAvis || !this.currentReclamationForAvis) {
+      // Marquer tous les champs comme touchés pour afficher les erreurs
+      Object.keys(this.avisForm.controls).forEach(key => {
+        this.avisForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isSubmittingAvis = true;
+    console.log("⭐ Soumission de l'avis en cours...");
+
+    // Créer l'objet avis selon le modèle Avis
+    const avis = new Avis();
+    avis.descriptionAvis = this.avisForm.get('commentaire')?.value;
+    avis.note = this.avisForm.get('note')?.value;
+    // avis.commentaire = this.avisForm.get('commentaire')?.value;
+    // avis.dateAvis = new Date().toISOString();
+    // avis.clientId = this.currentUser.idUser;
+    // avis.reclamationId = this.currentReclamationForAvis.idRecl;
+
+    console.log("📤 Données de l'avis à soumettre:", avis);
+
+    // Appel du service d'avis
+    this.gestionAvisService.addAvis(avis).subscribe({
+      next: (response) => {
+        console.log("✅ Avis soumis avec succès:", response);
+        this.isSubmittingAvis = false;
+        
+        // Fermer le modal
+        this.closeAvisModal();
+        
+        // Afficher un message de succès
+        this.notificationService.showSuccess('Votre avis a été soumis avec succès !', 4000);
+      },
+      error: (error) => {
+        console.error("❌ Erreur lors de la soumission de l'avis:", error);
+        this.isSubmittingAvis = false;
+        
+        let errorMessage = 'Une erreur s\'est produite lors de la soumission de l\'avis.';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les permissions pour donner un avis.';
+        } else if (error.status === 400) {
+          errorMessage = 'Données d\'avis invalides. Veuillez vérifier vos informations.';
+        } else if (error.error && error.error.message) {
+          errorMessage = error.error.message;
+        }
+        
+        this.notificationService.showError(errorMessage, 5000);
+      }
+    });
+  }
+
+  /**
+   * Met à jour l'affichage des étoiles selon la note sélectionnée
+   */
+  setStarRating(rating: number) {
+    this.avisForm.patchValue({ note: rating });
+  }
+
+  /**
+   * Retourne le nombre d'étoiles pleines selon la note
+   */
+  getStarRating(): number {
+    return this.avisForm.get('note')?.value || 0;
   }
 
 }

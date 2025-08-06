@@ -123,6 +123,15 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
+
+    // Initialiser le formulaire de création d'utilisateur
+    this.createUserForm = this.fb.group({
+      nomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      prenomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      emailUser: ['', [Validators.required, Validators.email]],
+      numeroLigne: ['', [Validators.min(0), Validators.max(99999999)]],
+      idRole: ['', [Validators.required]]
+    });
   }
 
   // Validateur personnalisé pour vérifier que les mots de passe correspondent
@@ -512,19 +521,14 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
 
   // Variable pour le modal de création d'utilisateur
   isCreateUserModalOpen = false;
-  createUserForm!: FormGroup;
+  createUserForm: FormGroup;
   isCreating = false;
 
   // Méthodes pour le modal de création d'utilisateur
   openCreateUserModal() {
     this.isCreateUserModalOpen = true;
-    this.createUserForm = this.fb.group({
-      nomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      prenomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      emailUser: ['', [Validators.required, Validators.email]],
-      numeroLigne: ['', [Validators.min(0), Validators.max(99999999)]],
-      idRole: ['', [Validators.required]]
-    });
+    // Reset the form instead of creating a new one
+    this.createUserForm.reset();
     document.body.style.overflow = 'hidden';
     console.log("Modal création utilisateur ouvert");
   }

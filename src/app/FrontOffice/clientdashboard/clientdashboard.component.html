@@ -1099,6 +1099,17 @@
                   <span class="btn-icon">🗑️</span>
                   Supprimer
                 </button>
+
+                <!-- Bouton d'avis pour les réclamations résolues -->
+                <button 
+                  class="avis-btn"
+                  (click)="openAvisModal(reclamation)"
+                  title="Donner votre avis sur cette réclamation"
+                  *ngIf="canGiveAvis(reclamation)"
+                >
+                  <span class="btn-icon">⭐</span>
+                  Donner un avis
+                </button>
               </div>
             </div>
           </div>
@@ -1607,6 +1618,120 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour donner un avis -->
+<div class="modal-overlay" [class.show]="isAvisModalOpen" (click)="closeAvisModal()">
+  <div class="modal-content avis-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">⭐ Donner votre avis</h3>
+      <button class="modal-close" (click)="closeAvisModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="currentReclamationForAvis">
+      <!-- Informations sur la réclamation -->
+      <div class="reclamation-info-section">
+        <h4 class="info-title">📋 Réclamation #{{ currentReclamationForAvis.idRecl }}</h4>
+        <div class="reclamation-summary">
+          <div class="summary-item">
+            <span class="summary-label">Type:</span>
+            <span class="summary-value">{{ getTypeReclLabel(currentReclamationForAvis.typeRecl) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">État:</span>
+            <span class="summary-value status-badge status-resolved">{{ getEtatReclLabel(currentReclamationForAvis.etatRecl) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Date de résolution:</span>
+            <span class="summary-value">{{ formatDate(currentReclamationForAvis.dateReponRecl) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message d'information -->
+      <div class="info-banner">
+        <div class="info-icon">💡</div>
+        <div class="info-content">
+          <h5>Votre avis compte !</h5>
+          <p>Aidez-nous à améliorer notre service en évaluant la qualité de traitement de votre réclamation.</p>
+        </div>
+      </div>
+
+      <!-- Formulaire d'avis -->
+      <form [formGroup]="avisForm" class="avis-form">
+        <!-- Note avec étoiles -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">⭐</span>
+            Évaluation générale *
+          </label>
+          <div class="star-rating-container">
+            <div class="star-rating">
+              <span 
+                *ngFor="let star of [1,2,3,4,5]; let i = index"
+                class="star"
+                [class.filled]="i < getStarRating()"
+                (click)="setStarRating(i + 1)"
+                [title]="(i + 1) + ' étoile(s)'"
+              >
+                ★
+              </span>
+            </div>
+            <div class="rating-labels">
+              <span class="rating-label" [class.active]="getStarRating() === 1">Très insatisfait</span>
+              <span class="rating-label" [class.active]="getStarRating() === 2">Insatisfait</span>
+              <span class="rating-label" [class.active]="getStarRating() === 3">Neutre</span>
+              <span class="rating-label" [class.active]="getStarRating() === 4">Satisfait</span>
+              <span class="rating-label" [class.active]="getStarRating() === 5">Très satisfait</span>
+            </div>
+          </div>
+          <div class="error-message" *ngIf="avisForm.get('note')?.invalid && avisForm.get('note')?.touched">
+            <span *ngIf="avisForm.get('note')?.errors?.['required']">Veuillez donner une note</span>
+            <span *ngIf="avisForm.get('note')?.errors?.['min'] || avisForm.get('note')?.errors?.['max']">La note doit être entre 1 et 5</span>
+          </div>
+        </div>
+
+        <!-- Commentaire -->
+        <div class="form-group">
+          <label for="commentaireAvis" class="form-label">
+            <span class="label-icon">💬</span>
+            Votre commentaire *
+          </label>
+          <textarea 
+            id="commentaireAvis"
+            formControlName="commentaire"
+            class="form-textarea"
+            rows="4"
+            placeholder="Décrivez votre expérience, ce qui vous a satisfait ou ce qui pourrait être amélioré..."
+            [class.error]="avisForm.get('commentaire')?.invalid && avisForm.get('commentaire')?.touched"
+          ></textarea>
+          <div class="char-counter">
+            {{ avisForm.get('commentaire')?.value?.length || 0 }}/500 caractères
+          </div>
+          <div class="error-message" *ngIf="avisForm.get('commentaire')?.invalid && avisForm.get('commentaire')?.touched">
+            <span *ngIf="avisForm.get('commentaire')?.errors?.['required']">Le commentaire est requis</span>
+            <span *ngIf="avisForm.get('commentaire')?.errors?.['minlength']">Le commentaire doit contenir au moins 10 caractères</span>
+            <span *ngIf="avisForm.get('commentaire')?.errors?.['maxlength']">Le commentaire ne peut pas dépasser 500 caractères</span>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeAvisModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn-submit" 
+        (click)="submitAvis()"
+        [disabled]="avisForm.invalid || isSubmittingAvis"
+      >
+        <span *ngIf="isSubmittingAvis">🔄 Envoi...</span>
+        <span *ngIf="!isSubmittingAvis">⭐ Envoyer l'avis</span>
+      </button>
     </div>
   </div>
 </div>
