@@ -1,18 +1,20 @@
-import { NgFor, NgIf } from '@angular/common';
+import { NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
+import { UserRegistrationRequest } from '../../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../../core/models/Utilisateur';
 import { GestionreclamationService } from '../../../services/gestionReclamationService/gestionreclamation.service';
+import { GestionRenseignementService } from '../../../services/gestionRenseignementService/gestion-renseignement.service';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../../services/notification.service';
 import { UserStateService } from '../../../services/user-state.service';
 
 @Component({
   selector: 'app-adminhome',
-  imports: [NgFor, NgIf, ReactiveFormsModule, FormsModule],
+  imports: [NgFor, NgIf, NgClass, ReactiveFormsModule, FormsModule],
   templateUrl: './adminhome.component.html',
   styleUrl: './adminhome.component.css'
 })
@@ -50,6 +52,32 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   filterIdRecl = '';
   filterEtatRecl = '';
   filterEmailClient = '';
+
+  // Variables pour le modal des renseignements admin
+  isRenseignementsModalOpen = false;
+  renseignementsList: any[] = [];
+  filteredRenseignementsList: any[] = [];
+  isLoadingRenseignements = false;
+  
+  // Variables pour les filtres des renseignements admin
+  filterIdRens = '';
+  filterSujetRens = '';
+  filterEmailClientRens = '';
+
+  // Options pour les filtres des renseignements admin
+  sujetRensOptions = [
+    { value: '', label: 'Tous les sujets' },
+    { value: 'Identité Numérique e-Houwiya', label: 'Identité Numérique e-Houwiya' },
+    { value: 'Internet Mobile', label: 'Internet Mobile' },
+    { value: 'Fixe', label: 'Fixe' },
+    { value: 'Mobile', label: 'Mobile' },
+    { value: 'Application MY TT', label: 'Application MY TT' },
+    { value: 'Linkedin', label: 'Linkedin' },
+    { value: 'Youtube', label: 'Youtube' },
+    { value: 'Twitter X', label: 'Twitter X' },
+    { value: 'FB/Messenger', label: 'FB/Messenger' },
+    { value: 'Portail', label: 'Portail' }
+  ];
   
   // Variables pour le modal de statistiques
   isStatsModalOpen = false;
@@ -85,6 +113,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private gestionUserService: GestionuserService,
     private gestionReclamationService: GestionreclamationService,
+    private gestionRenseignementService: GestionRenseignementService,
     private userStateService: UserStateService,
     private notificationService: NotificationService
   ) {
@@ -113,6 +142,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
         this.fetchClients();
         this.fetchAgents();
         this.fetchReclamations();
+        this.fetchRenseignements();
     // Récupérer les données de l'utilisateur connecté
     this.currentUser = this.gestionUserService.getCurrentUser();
     
@@ -164,12 +194,23 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   });
 }
 
+  /**
+   * Charge tous les renseignements
+   */
+  fetchRenseignements(): void {
+    // appel vers l'API pour récupérer les renseignements
+    this.gestionRenseignementService.getAllRenseignements().subscribe(data => {
+      this.renseignementsList = data;
+      this.adminStats.Renseignement = this.renseignementsList.length;
+    });
+  }
+
    // Statistiques admin (exemple)
   adminStats = {
     totalClient: 0,
     totalreclamation: 0,
     totalAgent: 0,
-    Renseignement: 1180
+    Renseignement: 0
   };
 
   // Activités récentes (exemple)
@@ -453,7 +494,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationsModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isReclamationsModalOpen || this.isCreateUserModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
@@ -465,8 +506,109 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   }
 
   navigateToServiceManagement() {
-    console.log("Navigation vers gestion services");
-    // Implémenter la navigation
+    console.log("Navigation vers création de comptes - Ouverture popup création");
+    this.openCreateUserModal();
+  }
+
+  // Variable pour le modal de création d'utilisateur
+  isCreateUserModalOpen = false;
+  createUserForm!: FormGroup;
+  isCreating = false;
+
+  // Méthodes pour le modal de création d'utilisateur
+  openCreateUserModal() {
+    this.isCreateUserModalOpen = true;
+    this.createUserForm = this.fb.group({
+      nomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      prenomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      emailUser: ['', [Validators.required, Validators.email]],
+      numeroLigne: ['', [Validators.min(0), Validators.max(99999999)]],
+      idRole: ['', [Validators.required]]
+    });
+    document.body.style.overflow = 'hidden';
+    console.log("Modal création utilisateur ouvert");
+  }
+
+  closeCreateUserModal() {
+    this.isCreateUserModalOpen = false;
+    this.createUserForm.reset();
+    this.isCreating = false;
+    document.body.style.overflow = 'auto';
+    console.log("Modal création utilisateur fermé");
+  }
+
+  createUser() {
+    if (this.createUserForm.invalid) {
+      this.markFormGroupTouched(this.createUserForm);
+      this.notificationService.showError('Veuillez corriger les erreurs dans le formulaire');
+      return;
+    }
+
+    this.isCreating = true;
+    const formData = this.createUserForm.value;
+    
+    // Créer l'objet de requête d'inscription avec le modèle correct
+    const registrationRequest = new UserRegistrationRequest();
+    registrationRequest.nomUser = formData.nomUser?.trim();
+    registrationRequest.prenomUser = formData.prenomUser?.trim();
+    registrationRequest.emailUser = formData.emailUser?.toLowerCase().trim();
+    registrationRequest.numeroLigne = formData.numeroLigne || 0;
+    registrationRequest.idRole = parseInt(formData.idRole);
+    // Les champs suivants sont optionnels pour la création par admin
+    registrationRequest.photoUser = '';
+    registrationRequest.passwordUser = '';
+    registrationRequest.documentContrat = '';
+
+    console.log('🔄 Création d\'un compte utilisateur...', registrationRequest);
+
+    this.gestionUserService.creerCompteByAdmin(registrationRequest).subscribe({
+      next: (response) => {
+        console.log('✅ Compte créé avec succès:', response);
+        let roleText = 'client';
+        if (formData.idRole === '1') {
+          roleText = 'administrateur';
+        } else if (formData.idRole === '2') {
+          roleText = 'agent';
+        }
+        
+        this.notificationService.showSuccess(`Compte ${roleText} créé avec succès pour ${formData.prenomUser} ${formData.nomUser}`);
+        this.closeCreateUserModal();
+        
+        // Actualiser les statistiques
+        this.fetchClients();
+        this.fetchAgents();
+        
+        this.isCreating = false;
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de la création du compte:', error);
+        let errorMessage = 'Erreur lors de la création du compte';
+        
+        if (error.status === 400) {
+          errorMessage = 'Données invalides. Veuillez vérifier les informations saisies';
+        } else if (error.status === 409) {
+          errorMessage = 'Cette adresse email est déjà utilisée';
+        } else if (error.status === 422) {
+          errorMessage = 'Format des données incorrect';
+        } else if (error.status === 500) {
+          errorMessage = 'Erreur serveur. Veuillez réessayer plus tard';
+        }
+        
+        this.notificationService.showError(errorMessage);
+        this.isCreating = false;
+      }
+    });
+  }
+
+  // Méthode utilitaire pour marquer tous les champs comme touchés
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
 
   navigateToReports() {
@@ -722,6 +864,101 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     this.statsData.evolutionMensuelle = evolutionData;
 
     console.log('📊 Statistiques calculées:', this.statsData);
+  }
+
+  // Méthodes pour le modal des renseignements admin
+  openRenseignementsModal() {
+    this.isRenseignementsModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    this.loadAllRenseignementsForModal();
+    console.log("Modal renseignements admin ouvert");
+  }
+
+  closeRenseignementsModal() {
+    this.isRenseignementsModalOpen = false;
+    document.body.style.overflow = 'auto';
+    // Réinitialiser les filtres
+    this.filterIdRens = '';
+    this.filterSujetRens = '';
+    this.filterEmailClientRens = '';
+    console.log("Modal renseignements admin fermé");
+  }
+
+  loadAllRenseignementsForModal() {
+    this.isLoadingRenseignements = true;
+    console.log("📋 Chargement de tous les renseignements pour l'admin...");
+
+    this.gestionRenseignementService.getAllRenseignements().subscribe({
+      next: (response: any) => {
+        console.log("✅ Renseignements chargés pour le modal admin:", response);
+        this.renseignementsList = response || [];
+        this.applyRenseignementsFilters();
+        this.isLoadingRenseignements = false;
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des renseignements:", error);
+        this.isLoadingRenseignements = false;
+        this.renseignementsList = [];
+        this.filteredRenseignementsList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des renseignements';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 403) {
+          errorMessage = 'Vous n\'avez pas les permissions pour voir les renseignements.';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  applyRenseignementsFilters() {
+    this.filteredRenseignementsList = this.renseignementsList.filter(renseignement => {
+      const matchId = !this.filterIdRens || renseignement.idRens.toString().includes(this.filterIdRens);
+      const matchSujet = !this.filterSujetRens || renseignement.sujetRens === this.filterSujetRens;
+      const matchEmail = !this.filterEmailClientRens || 
+        (renseignement.utilisateurRens?.emailUser && 
+         renseignement.utilisateurRens.emailUser.toLowerCase().includes(this.filterEmailClientRens.toLowerCase())) ||
+        (renseignement.utilisateurRens?.email && 
+         renseignement.utilisateurRens.email.toLowerCase().includes(this.filterEmailClientRens.toLowerCase()));
+      
+      return matchId && matchSujet && matchEmail;
+    });
+    
+    console.log("🔍 Filtres appliqués sur les renseignements admin:", {
+      total: this.renseignementsList.length,
+      filtered: this.filteredRenseignementsList.length,
+      filters: {
+        id: this.filterIdRens,
+        sujet: this.filterSujetRens,
+        email: this.filterEmailClientRens
+      }
+    });
+  }
+
+  onRenseignementsFilterChange() {
+    this.applyRenseignementsFilters();
+  }
+
+  clearRenseignementsFilters() {
+    this.filterIdRens = '';
+    this.filterSujetRens = '';
+    this.filterEmailClientRens = '';
+    this.applyRenseignementsFilters();
+  }
+
+  getSujetRensLabel(sujet: string): string {
+    const option = this.sujetRensOptions.find(opt => opt.value === sujet);
+    return option ? option.label : sujet;
+  }
+
+  getRenseignementStatusClass(renseignement: any): string {
+    return renseignement.descriptionReponRens ? 'status-resolved' : 'status-pending';
+  }
+
+  getRenseignementStatusLabel(renseignement: any): string {
+    return renseignement.descriptionReponRens ? 'Résolu' : 'En attente';
   }
 
 }
