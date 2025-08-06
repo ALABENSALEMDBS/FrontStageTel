@@ -2459,3 +2459,517 @@
     gap: 1rem;
   }
 }
+
+/* ===== STYLES POUR LE MODAL DES RENSEIGNEMENTS ADMIN ===== */
+
+/* Modal des renseignements admin */
+.renseignements-list-modal {
+  width: 95%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.renseignements-list-content {
+  margin-top: 1.5rem;
+}
+
+.renseignements-summary {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 10px;
+  border-left: 4px solid #2196f3;
+}
+
+.renseignements-summary h4 {
+  margin: 0;
+  color: #1976d2;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* États de chargement et vide */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #dc3545;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+/* Filtres - même style que l'agent */
+.filters-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.filters-title {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filters-row {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 180px;
+  flex: 1;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.filter-input,
+.filter-select {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.clear-filters-btn {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.clear-filters-btn:hover {
+  background: linear-gradient(135deg, #5a6268, #495057);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+/* Grille des renseignements */
+.renseignements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Carte de renseignement */
+.renseignement-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.renseignement-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.renseignement-card.resolved {
+  border-left: 4px solid #28a745;
+  background: linear-gradient(135deg, #f8fff8, #f0fff0);
+}
+
+/* En-tête du renseignement */
+.renseignement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.renseignement-id {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #495057;
+  font-family: 'Courier New', monospace;
+}
+
+.renseignement-status {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.renseignement-status.status-resolved {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.renseignement-status.status-pending {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Contenu du renseignement */
+.renseignement-content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Informations client dans le renseignement */
+.renseignement-client {
+  background: linear-gradient(135deg, #fff8e1, #ffecb3);
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid #ff9800;
+  margin-bottom: 1rem;
+}
+
+.renseignement-client h6 {
+  margin: 0 0 0.75rem 0;
+  color: #e65100;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.client-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.client-main-info,
+.client-secondary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.client-name,
+.client-email,
+.client-line,
+.client-id,
+.client-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.client-label {
+  color: #e65100;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.client-value {
+  color: #424242;
+  flex: 1;
+}
+
+.line-number {
+  font-family: 'Courier New', monospace;
+  background: #f5f5f5;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.client-id-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.account-status {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account-status.status-actif {
+  background: #d4edda;
+  color: #155724;
+}
+
+.account-status.status-inactif {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.renseignement-subject,
+.renseignement-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.renseignement-subject strong,
+.renseignement-date strong {
+  color: #495057;
+  min-width: 60px;
+}
+
+.renseignement-message {
+  padding: 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 10px;
+  border-left: 4px solid #2196f3;
+}
+
+.renseignement-message strong {
+  color: #1976d2;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.message-content {
+  margin: 0.5rem 0 0 0;
+  color: #37474f;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+/* Réponse du renseignement */
+.renseignement-response {
+  padding: 1rem;
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border-radius: 10px;
+  border-left: 4px solid #28a745;
+  margin-top: 0.5rem;
+}
+
+.renseignement-response strong {
+  color: #155724;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.response-content {
+  margin: 0.5rem 0 0 0;
+  color: #155724;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.response-date {
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.response-date small {
+  color: #6c757d;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Responsive pour les renseignements admin */
+@media (max-width: 768px) {
+  .renseignements-list-modal {
+    width: 98%;
+    max-height: 95vh;
+    margin: 1rem;
+  }
+
+  .renseignements-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .renseignement-card {
+    margin: 0 0.5rem;
+  }
+
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    min-width: unset;
+  }
+
+  .client-main-info,
+  .client-secondary-info {
+    gap: 0.25rem;
+  }
+
+  .client-name,
+  .client-email,
+  .client-line,
+  .client-id,
+  .client-status {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .client-label {
+    min-width: 80px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ========== STYLES POUR LE MODAL DE CRÉATION D'UTILISATEUR ========== */
+/* Utilise les mêmes styles que les autres modals existants */
+
+.create-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Utilise .form-input au lieu de .form-control pour correspondre aux autres modals */
+.create-user-form .form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: white;
+}
+
+.create-user-form .form-control:focus {
+  outline: none;
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.create-user-form .form-control.invalid {
+  border-color: #dc3545;
+  background-color: #fff5f5;
+}
+
+.create-user-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.create-user-form .form-group label {
+  display: block;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 0.5rem;
+}
+
+.error-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.error-messages .error-message {
+  color: #dc3545;
+  font-size: 0.8rem;
+}
+
+.form-help {
+  margin-top: 0.25rem;
+}
+
+.help-text {
+  color: #6c757d;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Responsive pour le modal de création */
+@media (max-width: 768px) {
+  .create-user-modal {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .create-user-form {
+    gap: 1rem;
+  }
+  
+  .create-user-form .form-control {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+  
+  .help-text {
+    font-size: 0.75rem;
+  }
+}

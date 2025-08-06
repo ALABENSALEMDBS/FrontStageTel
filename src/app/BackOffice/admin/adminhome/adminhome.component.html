@@ -24,7 +24,7 @@
           </button>
           <button class="nav-button" (click)="navigateToServiceManagement(); closeMobileMenu()">
             <span class="nav-icon">⚙️</span>
-            Services
+            Création Des Comptes
           </button>
           <button class="nav-button" (click)="navigateToReports(); closeMobileMenu()">
             <span class="nav-icon">📊</span>
@@ -151,11 +151,11 @@
             <div class="stat-label">Agents</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" (click)="openRenseignementsModal()" style="cursor: pointer;">
           <div class="stat-icon admin-stat">🗣️</div>
           <div class="stat-info">
             <div class="stat-number">{{ adminStats.Renseignement }}</div>
-            <div class="stat-label">Renseignement</div>
+            <div class="stat-label">Renseignement(s)</div>
           </div>
         </div>
       </div>
@@ -172,8 +172,8 @@
         </div>
         <div class="action-card" (click)="navigateToServiceManagement()">
           <div class="action-icon">⚙️</div>
-          <h3 class="action-title">Gestion Services</h3>
-          <p class="action-description">Configurer et maintenir les services</p>
+          <h3 class="action-title">Création Des Comptes</h3>
+          <p class="action-description">Création Des Comptes Utilisateurs</p>
         </div>
         <div class="action-card" (click)="navigateToReports()">
           <div class="action-icon">📊</div>
@@ -902,6 +902,316 @@
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeStatsModal()">
         Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Renseignements Admin -->
+<div class="modal-overlay" [class.show]="isRenseignementsModalOpen" (click)="closeRenseignementsModal()">
+  <div class="modal-content renseignements-list-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">💬 Gestion des Renseignements</h3>
+      <button class="modal-close" (click)="closeRenseignementsModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Filtres -->
+      <div class="filters-section">
+        <h4 class="filters-title">🔍 Filtrer les renseignements</h4>
+        <div class="filters-row">
+          <div class="filter-group">
+            <label for="filterIdRensAdmin">ID Renseignement :</label>
+            <input 
+              type="text" 
+              id="filterIdRensAdmin"
+              [(ngModel)]="filterIdRens" 
+              (input)="onRenseignementsFilterChange()"
+              placeholder="Rechercher par ID..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterSujetRensAdmin">Sujet :</label>
+            <select 
+              id="filterSujetRensAdmin"
+              [(ngModel)]="filterSujetRens" 
+              (change)="onRenseignementsFilterChange()"
+              class="filter-select"
+            >
+              <option *ngFor="let option of sujetRensOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterEmailClientRensAdmin">Email Client :</label>
+            <input 
+              type="text" 
+              id="filterEmailClientRensAdmin"
+              [(ngModel)]="filterEmailClientRens" 
+              (input)="onRenseignementsFilterChange()"
+              placeholder="Rechercher par email..."
+              class="filter-input"
+            >
+          </div>
+          
+          <div class="filter-actions">
+            <button class="clear-filters-btn" (click)="clearRenseignementsFilters()">
+              🔄 Effacer
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Liste des renseignements -->
+      <div class="renseignements-list-content">
+        <div *ngIf="isLoadingRenseignements" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Chargement des renseignements...</p>
+        </div>
+        
+        <div *ngIf="!isLoadingRenseignements && filteredRenseignementsList.length === 0" class="empty-state">
+          <div class="empty-icon">💬</div>
+          <h3>Aucun renseignement trouvé</h3>
+          <p>Aucun renseignement ne correspond aux critères de recherche.</p>
+        </div>
+        
+        <div *ngIf="!isLoadingRenseignements && filteredRenseignementsList.length > 0">
+          <div class="renseignements-summary">
+            <h4>📊 {{ filteredRenseignementsList.length }} renseignement(s) trouvé(s)</h4>
+          </div>
+          
+          <div class="renseignements-grid">
+            <div 
+              *ngFor="let renseignement of filteredRenseignementsList" 
+              class="renseignement-card"
+              [class.resolved]="renseignement.descriptionReponRens"
+            >
+              <div class="renseignement-header">
+                <div class="renseignement-id">
+                  <strong>REN-{{ renseignement.idRens }}</strong>
+                </div>
+                <div class="renseignement-status" 
+                     [ngClass]="getRenseignementStatusClass(renseignement)">
+                  {{ getRenseignementStatusLabel(renseignement) }}
+                </div>
+              </div>
+              
+              <div class="renseignement-content">
+                <!-- Informations Client - Affiché en premier -->
+                <div class="renseignement-client" *ngIf="renseignement.utilisateurRens">
+                  <h6>👤 Informations Client</h6>
+                  <div class="client-details">
+                    <div class="client-main-info">
+                      <div class="client-name">
+                        <span class="client-label">Nom complet:</span>
+                        <span class="client-value">{{ renseignement.utilisateurRens.prenomUser || renseignement.utilisateurRens.prenom || 'Prénom' }} {{ renseignement.utilisateurRens.nomUser || renseignement.utilisateurRens.nom || 'Nom' }}</span>
+                      </div>
+                      <div class="client-email">
+                        <span class="client-label">Email:</span>
+                        <span class="client-value">{{ renseignement.utilisateurRens.emailUser || renseignement.utilisateurRens.email }}</span>
+                      </div>
+                    </div>
+                    <div class="client-secondary-info">
+                      <div class="client-line" *ngIf="renseignement.utilisateurRens.numeroLigne">
+                        <span class="client-label">N° Ligne:</span>
+                        <span class="client-value line-number">{{ renseignement.utilisateurRens.numeroLigne }}</span>
+                      </div>
+                      <div class="client-id">
+                        <span class="client-label">ID Client:</span>
+                        <span class="client-value client-id-badge">#{{ renseignement.utilisateurRens.idUser }}</span>
+                      </div>
+                      <div class="client-status" *ngIf="renseignement.utilisateurRens.etatCompte">
+                        <span class="client-label">État compte:</span>
+                        <span class="client-value account-status" [class]="'status-' + renseignement.utilisateurRens.etatCompte?.toLowerCase()">
+                          {{ renseignement.utilisateurRens.etatCompte }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="renseignement-subject">
+                  <strong>📝 Sujet :</strong> {{ getSujetRensLabel(renseignement.sujetRens) }}
+                </div>
+                
+                <div class="renseignement-date">
+                  <strong>📅 Date :</strong> {{ formatDate(renseignement.dateRens) }}
+                </div>
+                
+                <div class="renseignement-message">
+                  <strong>💬 Question :</strong>
+                  <p class="message-content">{{ renseignement.descriptionRens }}</p>
+                </div>
+                
+                <div *ngIf="renseignement.descriptionReponRens" class="renseignement-response">
+                  <strong>✅ Réponse :</strong>
+                  <p class="response-content">{{ renseignement.descriptionReponRens }}</p>
+                  <div class="response-date" *ngIf="renseignement.dateReponRens">
+                    <small>Répondu le : {{ formatDate(renseignement.dateReponRens) }}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeRenseignementsModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour créer un utilisateur -->
+<div class="modal-overlay" [class.show]="isCreateUserModalOpen" (click)="closeCreateUserModal()">
+  <div class="modal-content create-user-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">👤 Créer un nouveau compte utilisateur</h3>
+      <button class="modal-close" (click)="closeCreateUserModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="createUserForm" class="create-user-form">
+        <div class="form-group">
+          <label for="nomUser">Nom *</label>
+          <input 
+            id="nomUser"
+            formControlName="nomUser"
+            type="text"
+            class="form-control"
+            [class.invalid]="createUserForm.get('nomUser')?.invalid && createUserForm.get('nomUser')?.touched"
+            placeholder="Entrez le nom"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('nomUser')?.invalid && createUserForm.get('nomUser')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['required']">
+              Le nom est requis
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['minlength']">
+              Le nom doit contenir au moins 2 caractères
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('nomUser')?.errors?.['maxlength']">
+              Le nom ne peut pas dépasser 50 caractères
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="prenomUser">Prénom *</label>
+          <input 
+            id="prenomUser"
+            formControlName="prenomUser"
+            type="text"
+            class="form-control"
+            [class.invalid]="createUserForm.get('prenomUser')?.invalid && createUserForm.get('prenomUser')?.touched"
+            placeholder="Entrez le prénom"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('prenomUser')?.invalid && createUserForm.get('prenomUser')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['required']">
+              Le prénom est requis
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['minlength']">
+              Le prénom doit contenir au moins 2 caractères
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('prenomUser')?.errors?.['maxlength']">
+              Le prénom ne peut pas dépasser 50 caractères
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="emailUser">Email *</label>
+          <input 
+            id="emailUser"
+            formControlName="emailUser"
+            type="email"
+            class="form-control"
+            [class.invalid]="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched"
+            placeholder="Entrez l'email"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('emailUser')?.errors?.['required']">
+              L'email est requis
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('emailUser')?.errors?.['email']">
+              Veuillez entrer un email valide
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="numeroLigne">Numéro de ligne</label>
+          <input 
+            id="numeroLigne"
+            formControlName="numeroLigne"
+            type="number"
+            class="form-control"
+            [class.invalid]="createUserForm.get('numeroLigne')?.invalid && createUserForm.get('numeroLigne')?.touched"
+            placeholder="Entrez le numéro de ligne (optionnel, max 8 chiffres)"
+            min="0"
+            max="99999999"
+            maxlength="8"
+          >
+          <div class="error-messages" *ngIf="createUserForm.get('numeroLigne')?.invalid && createUserForm.get('numeroLigne')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('numeroLigne')?.errors?.['min']">
+              Le numéro de ligne doit être positif
+            </div>
+            <div class="error-message" *ngIf="createUserForm.get('numeroLigne')?.errors?.['max']">
+              Le numéro de ligne ne peut pas dépasser 99 999 999 (8 chiffres max)
+            </div>
+          </div>
+          <div class="form-help">
+            <small class="help-text">Maximum 8 chiffres</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="idRole">Type de compte *</label>
+          <select 
+            id="idRole" 
+            formControlName="idRole" 
+            class="form-control"
+            [class.invalid]="createUserForm.get('idRole')?.invalid && createUserForm.get('idRole')?.touched"
+          >
+            <option value="">Sélectionnez un type</option>
+            <option value="1">Administrateur</option>
+            <option value="2">Agent</option>
+            <option value="3">Client</option>
+          </select>
+          <div class="error-messages" *ngIf="createUserForm.get('idRole')?.invalid && createUserForm.get('idRole')?.touched">
+            <div class="error-message" *ngIf="createUserForm.get('idRole')?.errors?.['required']">
+              Le type de compte est requis
+            </div>
+          </div>
+          <div class="form-help">
+            <small class="help-text">
+              • <strong>Administrateur</strong> : Accès complet au système<br>
+              • <strong>Agent</strong> : Gestion des clients et support<br>
+              • <strong>Client</strong> : Accès aux services de téléphonie
+            </small>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeCreateUserModal()">
+        Annuler
+      </button>
+      <button 
+        type="button" 
+        class="btn-submit" 
+        (click)="createUser()"
+        [disabled]="createUserForm.invalid || isCreating"
+      >
+        <span *ngIf="isCreating">🔄 Création...</span>
+        <span *ngIf="!isCreating">✅ Créer le compte</span>
       </button>
     </div>
   </div>
