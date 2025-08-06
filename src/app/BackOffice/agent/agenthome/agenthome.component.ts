@@ -1,10 +1,12 @@
-import { DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Avis } from '../../../../core/models/Avis';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
 import { Reclamation } from '../../../../core/models/Reclamation';
+import { GestionavisService } from '../../../services/gestionAvisService/gestionavis.service';
 import { GestionreclamationService } from '../../../services/gestionReclamationService/gestionreclamation.service';
 import { GestionRenseignementService } from '../../../services/gestionRenseignementService/gestion-renseignement.service';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
@@ -13,7 +15,7 @@ import { UserStateService } from '../../../services/user-state.service';
 
 @Component({
   selector: 'app-agenthome',
-  imports: [NgFor, NgIf, NgClass, ReactiveFormsModule, DatePipe, FormsModule],
+  imports: [NgFor, NgIf, NgClass, ReactiveFormsModule, DatePipe, DecimalPipe, FormsModule],
   templateUrl: './agenthome.component.html',
   styleUrl: './agenthome.component.css'
 })
@@ -106,6 +108,13 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     evolutionMensuelle: []
   };
   isLoadingAgentStats = false;
+
+  // Variables pour le modal d'avis
+  isAvisListModalOpen = false;
+  avisList: Avis[] = [];
+  filteredAvisList: Avis[] = [];
+  isLoadingAvis = false;
+  filterNoteAvis: number = 0; // 0 = tous, 1-5 = filtrer par note
   
   // Variables pour le modal de rejet des réclamations
   isRejeterModalOpen = false;
@@ -133,7 +142,7 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     totalRenseignements: 0,
     renseignementsEnCours: 0,
     renseignementsResolus: 0,
-    tauxResolution: '92%',
+    totalAvis: 0,
     tempsResponseMoyen: '2.5h'
   };
 
@@ -207,7 +216,8 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     private gestionReclamationService: GestionreclamationService,
     private gestionRenseignementService: GestionRenseignementService,
     private userStateService: UserStateService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private gestionAvisService: GestionavisService
   ) {
     // Initialiser le formulaire de changement de mot de passe
     this.changePasswordForm = this.fb.group({
@@ -261,6 +271,12 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
     
     // Charger les renseignements réels
     this.loadRenseignements();
+    
+    // Charger les avis pour les statistiques
+    this.loadAvisForStats();
+    
+    // Charger tous les avis pour la modal
+    this.loadAllAvis();
   }
 
   /**
@@ -594,7 +610,7 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // S'assurer que le scroll est restauré si le composant est détruit
-    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isPhotoModalOpen || this.isReclamationsModalOpen) {
+    if (this.isChangePasswordModalOpen || this.isUserInfoModalOpen || this.isPhotoModalOpen || this.isReclamationsModalOpen || this.isAvisListModalOpen) {
       document.body.style.overflow = 'auto';
     }
   }
@@ -1323,6 +1339,206 @@ export class AgenthomeComponent implements OnInit, OnDestroy {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  }
+
+  // ========== MÉTHODES POUR LE MODAL D'AVIS ==========
+
+  /**
+   * Ouvre le modal de la liste des avis
+   */
+  openAvisListModal() {
+    console.log('🔥 CLICK DETECTÉ - Ouverture de la modal avis');
+    console.log('État avant:', this.isAvisListModalOpen);
+    
+    this.isAvisListModalOpen = true;
+    document.body.style.overflow = 'hidden';
+    
+    console.log('État après:', this.isAvisListModalOpen);
+    console.log('Style body overflow:', document.body.style.overflow);
+    
+    this.loadAllAvis();
+    console.log('✅ Modal avis ouverte avec succès');
+    
+    // Vérification DOM
+    setTimeout(() => {
+      const modalElement = document.querySelector('.avis-modal');
+      console.log('Modal dans le DOM:', modalElement ? 'OUI' : 'NON');
+      if (modalElement) {
+        console.log('Styles de la modal:', window.getComputedStyle(modalElement).display);
+      }
+    }, 100);
+  }
+
+  /**
+   * Ferme le modal de la liste des avis
+   */
+  closeAvisListModal() {
+    this.isAvisListModalOpen = false;
+    this.filterNoteAvis = 0; // Réinitialiser le filtre
+    document.body.style.overflow = 'auto';
+    console.log("❌ Modal de la liste des avis fermé");
+  }
+
+  /**
+   * Charge tous les avis depuis le service
+   */
+  loadAllAvis() {
+    this.isLoadingAvis = true;
+    console.log("📊 Chargement de tous les avis...");
+
+    this.gestionAvisService.getAllAvis().subscribe({
+      next: (response: Avis[]) => {
+        console.log("✅ Avis chargés:", response);
+        this.avisList = response || [];
+        this.filteredAvisList = [...this.avisList]; // Initialiser la liste filtrée
+        this.filterNoteAvis = 0; // Réinitialiser le filtre à 0
+        this.isLoadingAvis = false;
+        
+        console.log("📋 Initialisation terminée:", {
+          totalAvis: this.avisList.length,
+          filteredAvis: this.filteredAvisList.length,
+          filterNote: this.filterNoteAvis
+        });
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des avis:", error);
+        this.isLoadingAvis = false;
+        this.avisList = [];
+        this.filteredAvisList = [];
+        
+        let errorMessage = 'Erreur lors du chargement des avis';
+        if (error.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+        } else if (error.status === 404) {
+          errorMessage = 'Aucun avis trouvé';
+        }
+        
+        this.notificationService.showError(errorMessage, 4000);
+      }
+    });
+  }
+
+  /**
+   * Filtre les avis par note
+   */
+  filterAvisByNote() {
+    console.log('🔍 Filtrage des avis:', {
+      filterNoteAvis: this.filterNoteAvis,
+      typeOfFilter: typeof this.filterNoteAvis,
+      totalAvis: this.avisList.length
+    });
+
+    // Convertir en nombre si c'est une chaîne
+    const filterNote = Number(this.filterNoteAvis);
+    
+    if (filterNote === 0) {
+      this.filteredAvisList = [...this.avisList];
+    } else {
+      this.filteredAvisList = this.avisList.filter(avis => {
+        const avisNote = Number(avis.note);
+        const match = avisNote === filterNote;
+        console.log(`Avis #${avis.idAvis}: note=${avisNote}, filtre=${filterNote}, match=${match}`);
+        return match;
+      });
+    }
+    
+    console.log(`✅ Filtrage terminé: ${this.filteredAvisList.length} avis trouvés`);
+  }
+
+  /**
+   * Gère le changement de filtre de note
+   */
+  onNoteFilterChange() {
+    console.log('📝 Changement de filtre détecté:', this.filterNoteAvis);
+    this.filterAvisByNote();
+  }
+
+  /**
+   * Efface le filtre de note
+   */
+  clearNoteFilter() {
+    this.filterNoteAvis = 0;
+    this.filteredAvisList = [...this.avisList];
+    console.log("🗑️ Filtre de note effacé");
+  }
+
+  /**
+   * Formate la date d'un avis
+   */
+  formatAvisDate(dateString: string): string {
+    if (!dateString) return 'Non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  /**
+   * Génère les étoiles pour l'affichage de la note
+   */
+  getStarsArray(note: number): number[] {
+    return Array(5).fill(0).map((_, i) => i + 1);
+  }
+
+  /**
+   * Vérifie si une étoile doit être pleine
+   */
+  isStarFilled(starIndex: number, note: number): boolean {
+    return starIndex <= note;
+  }
+
+  /**
+   * TrackBy function pour optimiser les performances de la liste d'avis
+   */
+  trackByAvisId(index: number, avis: Avis): number {
+    return avis.idAvis;
+  }
+
+  /**
+   * Retourne la liste d'avis à utiliser pour les calculs de statistiques
+   */
+  getFilteredAvisList(): Avis[] {
+    return this.filteredAvisList;
+  }
+
+  /**
+   * Calcule la note moyenne des avis
+   */
+  getNoteMoyenneAvis(): number {
+    // Utiliser la liste filtrée si un filtre est appliqué, sinon la liste complète
+    const avisToUse = this.filterNoteAvis > 0 ? this.filteredAvisList : this.avisList;
+    
+    if (!avisToUse || avisToUse.length === 0) {
+      return 0;
+    }
+    const total = avisToUse.reduce((sum, avis) => sum + (avis.note || 0), 0);
+    return Number((total / avisToUse.length).toFixed(1));
+  }
+
+  /**
+   * Charge les avis pour mettre à jour les statistiques
+   */
+  loadAvisForStats(): void {
+    this.gestionAvisService.getAllAvis().subscribe({
+      next: (response: Avis[]) => {
+        const avis = response || [];
+        // Mettre à jour les statistiques avec le nombre d'avis
+        this.agentStats = {
+          ...this.agentStats,
+          totalAvis: avis.length,
+          tempsResponseMoyen: avis.length > 0 ? this.getNoteMoyenneAvis() + '/5' : '0/5'
+        };
+        console.log("✅ Statistiques d'avis mises à jour:", avis.length, "avis trouvés");
+      },
+      error: (error: any) => {
+        console.error("❌ Erreur lors du chargement des avis pour les stats:", error);
+        // Ne pas afficher d'erreur ici car c'est juste pour les statistiques
+      }
     });
   }
   
