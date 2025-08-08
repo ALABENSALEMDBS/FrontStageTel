@@ -191,14 +191,37 @@
     <!-- Recent Activities Section -->
     <section class="activities-section">
       <h2 class="section-title">Activités Récentes</h2>
-      <div class="activities-list">
-        <div class="activity-item" *ngFor="let activity of recentActivities">
+      
+      <!-- Loading state -->
+      <div *ngIf="isLoadingActivities" class="loading-activities">
+        <div class="loading-spinner"></div>
+        <p>Chargement des activités récentes...</p>
+      </div>
+
+      <!-- Activities list -->
+      <div *ngIf="!isLoadingActivities" class="activities-list">
+        <div *ngIf="recentActivities.length === 0" class="no-activities">
+          <div class="no-activities-icon">📭</div>
+          <h4>Aucune activité récente</h4>
+          <p>Les activités apparaîtront ici au fur et à mesure</p>
+        </div>
+
+        <div *ngFor="let activity of recentActivities; trackBy: trackByActivityTime" 
+             class="activity-item" 
+             [ngClass]="'activity-' + activity.type">
           <div class="activity-icon">{{ activity.icon }}</div>
           <div class="activity-info">
             <div class="activity-message">{{ activity.message }}</div>
             <div class="activity-time">{{ activity.time }}</div>
           </div>
           <div class="activity-type" [class]="activity.type"></div>
+        </div>
+
+        <!-- Refresh button -->
+        <div class="activities-actions">
+          <button class="refresh-activities-btn" (click)="loadRecentActivities()" title="Actualiser les activités">
+            🔄 Actualiser
+          </button>
         </div>
       </div>
     </section>

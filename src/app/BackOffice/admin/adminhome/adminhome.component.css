@@ -504,6 +504,152 @@
   background: #6c757d;
 }
 
+/* Nouveaux styles pour les activités dynamiques */
+.loading-activities {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.loading-activities .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f8f9fa;
+  border-top: 3px solid #dc3545;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.loading-activities p {
+  color: #6c757d;
+  margin: 0;
+}
+
+.no-activities {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6c757d;
+}
+
+.no-activities-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.no-activities h4 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.no-activities p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Styles spécifiques par type d'activité */
+.activity-reclamation-pending .activity-icon {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+.activity-reclamation-progress .activity-icon {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.activity-reclamation-resolved .activity-icon {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.activity-reclamation-rejected .activity-icon {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.activity-renseignement-pending .activity-icon {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.activity-renseignement-resolved .activity-icon {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.activity-user-created .activity-icon {
+  background: linear-gradient(135deg, #6f42c1, #5a32a3);
+}
+
+.activity-system .activity-icon {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+/* Types d'activités pour la barre latérale colorée */
+.activity-type.reclamation-pending {
+  background: #ffc107;
+}
+
+.activity-type.reclamation-progress {
+  background: #007bff;
+}
+
+.activity-type.reclamation-resolved {
+  background: #28a745;
+}
+
+.activity-type.reclamation-rejected {
+  background: #dc3545;
+}
+
+.activity-type.renseignement-pending {
+  background: #17a2b8;
+}
+
+.activity-type.renseignement-resolved {
+  background: #28a745;
+}
+
+.activity-type.user-created {
+  background: #6f42c1;
+}
+
+/* Actions des activités */
+.activities-actions {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.refresh-activities-btn {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refresh-activities-btn:hover {
+  background: linear-gradient(135deg, #c82333, #a71e2a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.refresh-activities-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* System Status Section */
 .status-section {
   margin-bottom: 2rem;
