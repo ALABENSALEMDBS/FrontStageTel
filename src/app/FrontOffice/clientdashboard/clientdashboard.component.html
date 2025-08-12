@@ -537,7 +537,7 @@
               class="form-input"
               [class.error]="renseignementForm.get('sujetRens')?.invalid && renseignementForm.get('sujetRens')?.touched"
             >
-              <option value="">Sélectionnez le sujet de votre demande</option>
+              <option value="" disabled>Sélectionnez le sujet de votre demande</option>
               <option *ngFor="let option of sujetRenseignementOptions" [value]="option">
                 {{ option }}
               </option>
@@ -651,7 +651,7 @@
             [class.error]="reclamationForm.get('typeRecl')?.invalid && reclamationForm.get('typeRecl')?.touched"
             (change)="onTypeReclChange($event)"
           >
-            <option value="">Sélectionnez un type</option>
+            <option value=""disabled>Sélectionnez un type</option>
             <option value="Mon_compte_MY_TT">Mon compte MY TT</option>
             <option value="Mon_Mobile">Mon Mobile</option>
             <option value="Internet_Mobile">Internet Mobile</option>
@@ -675,7 +675,7 @@
             class="form-input"
             [class.error]="reclamationForm.get('sujetRecl')?.invalid && reclamationForm.get('sujetRecl')?.touched"
           >
-            <option value="">Sélectionnez le sujet</option>
+            <option value=""  disabled>Sélectionnez le sujet</option>
             <option *ngFor="let option of currentSujetReclOptions" [value]="option">
               {{ option }}
             </option>
