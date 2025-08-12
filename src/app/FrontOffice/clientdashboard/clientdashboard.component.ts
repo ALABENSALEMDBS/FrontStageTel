@@ -327,8 +327,11 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
 
   openRenseignement() {
     this.isRenseignementModalOpen = true;
-    // Réinitialiser le formulaire
-    this.renseignementForm.reset();
+    // Réinitialiser le formulaire avec des valeurs vides
+    this.renseignementForm.reset({
+      sujetRens: '',
+      descriptionRens: ''
+    });
     // Bloquer le scroll de la page
     document.body.style.overflow = 'hidden';
     console.log("💬 Modal renseignement ouvert");
@@ -337,7 +340,10 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   closeRenseignementModal() {
     this.isRenseignementModalOpen = false;
     // Réinitialiser le formulaire
-    this.renseignementForm.reset();
+    this.renseignementForm.reset({
+      sujetRens: '',
+      descriptionRens: ''
+    });
     this.isSubmittingRenseignement = false;
     // Restaurer le scroll de la page
     document.body.style.overflow = 'auto';
@@ -1052,15 +1058,15 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   openReclamationModal() {
     this.isReclamationModalOpen = true;
     // Réinitialiser le formulaire
-    this.reclamationForm.reset();
+      // this.reclamationForm.reset();
+    this.reclamationForm.reset({
+      typeRecl: '',
+      sujetRecl: '',
+      numeroConcerne: '',
+      descriptionRecl: ''
+    });
     
-    // Pré-remplir le numéro concerné avec le numéro de ligne de l'utilisateur
-    if (this.currentUser && this.currentUser.numeroLigne) {
-      this.reclamationForm.patchValue({
-        numeroConcerne: this.currentUser.numeroLigne
-      });
-      console.log("📞 Numéro concerné pré-rempli avec le numéro de ligne:", this.currentUser.numeroLigne);
-    }
+
     
     this.selectedCaptureFile = null;
     this.selectedDocumentFile = null;
@@ -1147,7 +1153,13 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   closeReclamationModal() {
     this.isReclamationModalOpen = false;
     // Réinitialiser le formulaire et les fichiers
-    this.reclamationForm.reset();
+    //  this.reclamationForm.reset();
+    this.reclamationForm.reset({
+      typeRecl: '',
+      sujetRecl: '',
+      numeroConcerne: '',
+      descriptionRecl: ''
+    });
     this.selectedCaptureFile = null;
     this.selectedDocumentFile = null;
     this.isUploadingCapture = false;

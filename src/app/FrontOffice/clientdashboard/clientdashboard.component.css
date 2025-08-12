@@ -3780,6 +3780,15 @@
   font-style: italic;
 }
 
+/* Styles spécifiques pour les champs numeroConcerne */
+#numeroConcerne,
+#editNumeroConcerne {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
 /* Prévisualisations de fichiers */
 .file-preview {
   background: white;
