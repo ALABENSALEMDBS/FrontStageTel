@@ -1150,20 +1150,30 @@
 
         <div class="form-group">
           <label for="emailUser">Email *</label>
-          <input 
-            id="emailUser"
-            formControlName="emailUser"
-            type="email"
-            class="form-control"
-            [class.invalid]="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched"
-            placeholder="Entrez l'email"
-          >
+          <div class="input-with-indicator">
+            <input 
+              id="emailUser"
+              formControlName="emailUser"
+              type="email"
+              class="form-control"
+              [class.invalid]="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched"
+              [class.checking]="createUserForm.get('emailUser')?.pending"
+              placeholder="Entrez l'email"
+            >
+            <!-- Indicateur de vérification -->
+            <div class="email-check-indicator" *ngIf="createUserForm.get('emailUser')?.pending">
+              <div class="checking-spinner"></div>
+            </div>
+          </div>
           <div class="error-messages" *ngIf="createUserForm.get('emailUser')?.invalid && createUserForm.get('emailUser')?.touched">
             <div class="error-message" *ngIf="createUserForm.get('emailUser')?.errors?.['required']">
               L'email est requis
             </div>
             <div class="error-message" *ngIf="createUserForm.get('emailUser')?.errors?.['email']">
               Veuillez entrer un email valide
+            </div>
+            <div class="error-message email-exists-error" *ngIf="createUserForm.get('emailUser')?.errors?.['emailExists']">
+              ⚠️ Cet email existe déjà dans le système
             </div>
           </div>
         </div>
@@ -1202,10 +1212,10 @@
             class="form-control"
             [class.invalid]="createUserForm.get('idRole')?.invalid && createUserForm.get('idRole')?.touched"
           >
-            <option value="">Sélectionnez un type</option>
+            <option value="" disabled>Cliquez ici pour sélectionner le type de compte</option>
             <option value="1">Administrateur</option>
             <option value="2">Agent</option>
-            <option value="3">Client</option>
+            <!-- <option value="3">Client</option> -->
           </select>
           <div class="error-messages" *ngIf="createUserForm.get('idRole')?.invalid && createUserForm.get('idRole')?.touched">
             <div class="error-message" *ngIf="createUserForm.get('idRole')?.errors?.['required']">
@@ -1216,7 +1226,7 @@
             <small class="help-text">
               • <strong>Administrateur</strong> : Accès complet au système<br>
               • <strong>Agent</strong> : Gestion des clients et support<br>
-              • <strong>Client</strong> : Accès aux services de téléphonie
+              <!-- • <strong>Client</strong> : Accès aux services de téléphonie -->
             </small>
           </div>
         </div>

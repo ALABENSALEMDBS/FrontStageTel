@@ -3089,6 +3089,52 @@
   font-size: 0.8rem;
 }
 
+/* Styles pour la vérification d'email - Admin */
+.input-with-indicator {
+  position: relative;
+  width: 100%;
+  /* display: flex; */
+}
+
+/* .input-with-indicator .form-control {
+  width: 100%;
+  flex: 1;
+} */
+
+.email-check-indicator {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.checking-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f8f9fa;
+  border-top: 2px solid #dc3545;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.form-control.checking {
+  padding-right: 40px;
+  border-color: #ffc107;
+}
+
+.email-exists-error {
+  color: #dc3545 !important;
+  font-weight: 500;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .form-help {
   margin-top: 0.25rem;
 }

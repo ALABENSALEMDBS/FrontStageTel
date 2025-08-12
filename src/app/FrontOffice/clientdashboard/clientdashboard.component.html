@@ -1100,7 +1100,7 @@
                   Supprimer
                 </button>
 
-                <!-- Bouton d'avis pour les réclamations résolues -->
+                <!-- Bouton d'avis pour les réclamations résolues sans avis -->
                 <button 
                   class="avis-btn"
                   (click)="openAvisModal(reclamation)"
@@ -1109,6 +1109,17 @@
                 >
                   <span class="btn-icon">⭐</span>
                   Donner un avis
+                </button>
+
+                <!-- Bouton d'avis désactivé pour les réclamations ayant déjà un avis -->
+                <button 
+                  class="avis-btn disabled"
+                  title="Vous avez déjà donné un avis pour cette réclamation"
+                  *ngIf="reclamation.etatRecl === 'TRAITEE' && reclamation.avisRecl"
+                  disabled
+                >
+                  <span class="btn-icon">✅</span>
+                  Avis donné
                 </button>
               </div>
             </div>

@@ -13,8 +13,12 @@ export class GestionavisService {
   constructor(private http: HttpClient) {}
 
   // Ajouter un avis
-  addAvis(avis: Avis): Observable<Avis> {
-    return this.http.post<Avis>(`${this.baseUrl}/add`, avis);
+  // addAvis(avis: Avis): Observable<Avis> {
+  //   return this.http.post<Avis>(`${this.baseUrl}/add`, avis);
+  // }
+
+  addAvis(idReclamation: number, avis: Avis): Observable<Avis> {
+    return this.http.post<Avis>(`${this.baseUrl}/add/${idReclamation}`, avis);
   }
 
   // Récupérer tous les avis

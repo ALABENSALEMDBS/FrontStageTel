@@ -61,7 +61,16 @@
           <span *ngIf="signupForm.get('emailUser')?.errors?.['required']">L'email est requis</span>
           <span *ngIf="signupForm.get('emailUser')?.errors?.['email']">Format d'email invalide</span>
           <span *ngIf="signupForm.get('emailUser')?.errors?.['noDotInDomain']">Le domaine de l'email doit contenir un point (ex: ala&#64;esprit.tn)</span>
+          <span *ngIf="signupForm.get('emailUser')?.errors?.['emailExists']" class="email-exists-error">
+            ⚠️ Cette adresse email est déjà utilisée. Veuillez choisir une autre adresse email.
+          </span>
           <!-- <span *ngIf="signupForm.get('emailUser')?.errors?.['invalidDomainFormat']">Format de domaine invalide</span> -->
+        </div>
+        
+        <!-- Indicateur de vérification en cours -->
+        <div class="email-checking" *ngIf="signupForm.get('emailUser')?.pending">
+          <span class="checking-spinner">🔄</span>
+          <span>Vérification de la disponibilité de l'email...</span>
         </div>
       </div>
 
