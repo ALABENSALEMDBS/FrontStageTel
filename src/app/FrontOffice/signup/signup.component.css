@@ -305,6 +305,40 @@
   margin-top: 0.5rem;
 }
 
+.error-message .email-exists-error {
+  color: #e74c3c;
+  font-weight: 600;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border-left: 4px solid #e74c3c;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.email-checking {
+  color: #3498db;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(52, 152, 219, 0.1);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border-left: 4px solid #3498db;
+}
+
+.checking-spinner {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .signup-btn {
   width: 100%;
   padding: 1rem;

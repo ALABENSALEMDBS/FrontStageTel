@@ -2061,7 +2061,8 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
         dateRecl: this.reclamationToEdit.dateRecl,
         descriptionReponRecl: this.reclamationToEdit.descriptionReponRecl,
         dateReponRecl: this.reclamationToEdit.dateReponRecl,
-        utilisateurRecl: this.reclamationToEdit.utilisateurRecl
+        utilisateurRecl: this.reclamationToEdit.utilisateurRecl,
+        avisRecl: this.reclamationToEdit.avisRecl
       };
 
       console.log("📤 Envoi de la réclamation modifiée:", updatedReclamation);
@@ -2133,10 +2134,12 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
   // ========== MÉTHODES POUR LES AVIS ==========
 
   /**
-   * Vérifie si une réclamation peut recevoir un avis (seulement si elle est résolue/traitée)
+   * Vérifie si une réclamation peut recevoir un avis (seulement si elle est résolue/traitée et n'a pas déjà d'avis)
    */
   canGiveAvis(reclamation: any): boolean {
-    return reclamation && reclamation.etatRecl === 'TRAITEE';
+    return reclamation && 
+           reclamation.etatRecl === 'TRAITEE' && 
+           !reclamation.avisRecl; // Vérifier qu'il n'y a pas déjà un avis
   }
 
   /**
@@ -2144,10 +2147,17 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
    */
   openAvisModal(reclamation: any) {
     if (!this.canGiveAvis(reclamation)) {
-      this.notificationService.showError(
-        'Vous ne pouvez donner un avis que sur les réclamations résolues.', 
-        4000
-      );
+      // Déterminer le message d'erreur approprié
+      let errorMessage = '';
+      if (reclamation.etatRecl !== 'TRAITEE') {
+        errorMessage = 'Vous ne pouvez donner un avis que sur les réclamations résolues.';
+      } else if (reclamation.avisRecl) {
+        errorMessage = 'Vous avez déjà donné un avis pour cette réclamation.';
+      } else {
+        errorMessage = 'Impossible de donner un avis pour cette réclamation.';
+      }
+      
+      this.notificationService.showError(errorMessage, 4000);
       return;
     }
 
@@ -2204,13 +2214,17 @@ export class ClientdashboardComponent  implements OnInit, OnDestroy {
     console.log("📤 Données de l'avis à soumettre:", avis);
 
     // Appel du service d'avis
-    this.gestionAvisService.addAvis(avis).subscribe({
+    this.gestionAvisService.addAvis(this.currentReclamationForAvis.idRecl, avis).subscribe({
       next: (response) => {
         console.log("✅ Avis soumis avec succès:", response);
         this.isSubmittingAvis = false;
         
         // Fermer le modal
         this.closeAvisModal();
+        
+        // Recharger les réclamations pour mettre à jour l'affichage
+        this.loadReclamations();
+        this.loadReclamationsCount();
         
         // Afficher un message de succès
         this.notificationService.showSuccess('Votre avis a été soumis avec succès !', 4000);

@@ -1,3 +1,4 @@
+import { Avis } from "./Avis";
 import { Utilisateur } from "./Utilisateur";
 
 export enum TypeRecl {
@@ -29,4 +30,5 @@ export class Reclamation{
 
     numeroConcerne!: number;
     sujetRecl!: string;
+    avisRecl!: Avis;
 }

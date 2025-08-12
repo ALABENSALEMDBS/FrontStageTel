@@ -1,7 +1,8 @@
 import { NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { catchError, debounceTime, map, Observable, of, switchMap } from 'rxjs';
 import { ChangePasswordRequest } from '../../../../core/models/ChangePasswordRequest';
 import { ChangePhoto } from '../../../../core/models/ChangePhoto';
 import { UserRegistrationRequest } from '../../../../core/models/UserRegistrationRequest';
@@ -128,7 +129,7 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     this.createUserForm = this.fb.group({
       nomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       prenomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      emailUser: ['', [Validators.required, Validators.email]],
+      emailUser: ['', [Validators.required, Validators.email], [this.emailExistsValidator()]],
       numeroLigne: ['', [Validators.min(0), Validators.max(99999999)]],
       idRole: ['', [Validators.required]]
     });
@@ -145,6 +146,29 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  /**
+   * Validateur asynchrone pour vérifier si l'email existe déjà
+   * @returns AsyncValidatorFn
+   */
+  emailExistsValidator(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      if (!control.value || control.value.trim() === '') {
+        return of(null);
+      }
+
+      // Débounce pour éviter trop d'appels à l'API
+      return of(control.value).pipe(
+        debounceTime(500), // Attendre 500ms après que l'utilisateur ait arrêté de taper
+        switchMap((email: string) => 
+          this.gestionUserService.checkEmailExists(email).pipe(
+            map((exists: boolean) => exists ? { emailExists: true } : null),
+            catchError(() => of(null)) // En cas d'erreur, on considère que l'email n'existe pas
+          )
+        )
+      );
+    };
   }
 
   ngOnInit(): void {
@@ -516,14 +540,28 @@ export class AdminhomeComponent implements OnInit, OnDestroy {
   openCreateUserModal() {
     this.isCreateUserModalOpen = true;
     // Reset the form instead of creating a new one
-    this.createUserForm.reset();
+    // this.createUserForm.reset();
+    this.createUserForm.reset({
+      nomUser: '',
+      prenomUser: '',
+      emailUser: '',
+      numeroLigne: 0,
+      idRole: ''
+    });
     document.body.style.overflow = 'hidden';
     console.log("Modal création utilisateur ouvert");
   }
 
   closeCreateUserModal() {
     this.isCreateUserModalOpen = false;
-    this.createUserForm.reset();
+    // this.createUserForm.reset();
+    this.createUserForm.reset({
+      nomUser: '',
+      prenomUser: '',
+      emailUser: '',
+      numeroLigne: 0,
+      idRole: ''
+    });
     this.isCreating = false;
     document.body.style.overflow = 'auto';
     console.log("Modal création utilisateur fermé");

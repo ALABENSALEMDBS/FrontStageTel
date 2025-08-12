@@ -1,7 +1,8 @@
 import { NgIf } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, AsyncValidatorFn, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { catchError, debounceTime, map, Observable, of, switchMap } from 'rxjs';
 import { Utilisateur } from '../../../core/models/Utilisateur';
 import { GestionuserService } from '../../services/gestionUserSerice/gestionuser.service';
 import { NotificationService } from '../../services/notification.service';
@@ -35,7 +36,10 @@ export class SignupComponent implements OnDestroy {
     this.signupForm = new FormGroup({
       nomUser: new FormControl("", [Validators.required, Validators.minLength(2)]),
       prenomUser: new FormControl("", [Validators.required, Validators.minLength(2)]),
-      emailUser: new FormControl("", [Validators.required, Validators.email, this.emailDomainValidator]),
+      emailUser: new FormControl("", 
+        [Validators.required, Validators.email, this.emailDomainValidator],
+        [this.emailExistsValidator()]
+      ),
       passwordUser: new FormControl("", [Validators.required, Validators.minLength(8)]),
       verifpassword: new FormControl("", [Validators.required]),
       numeroLigne: new FormControl("", [Validators.required, Validators.pattern(/^\d{8}$/)]),
@@ -81,6 +85,29 @@ export class SignupComponent implements OnDestroy {
     }
 
     return null
+  }
+
+  /**
+   * Validateur asynchrone pour vérifier si l'email existe déjà
+   * @returns AsyncValidatorFn
+   */
+  emailExistsValidator(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      if (!control.value || control.value.trim() === '') {
+        return of(null);
+      }
+
+      // Débounce pour éviter trop d'appels à l'API
+      return of(control.value).pipe(
+        debounceTime(500), // Attendre 500ms après que l'utilisateur ait arrêté de taper
+        switchMap((email: string) => 
+          this.gestionuserService.checkEmailExists(email).pipe(
+            map((exists: boolean) => exists ? { emailExists: true } : null),
+            catchError(() => of(null)) // En cas d'erreur, on considère que l'email n'existe pas
+          )
+        )
+      );
+    };
   }
 
 

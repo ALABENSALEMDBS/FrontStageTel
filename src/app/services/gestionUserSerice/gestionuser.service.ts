@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ChangePasswordRequest } from '../../../core/models/ChangePasswordRequest';
+import { ChangePhoto } from '../../../core/models/ChangePhoto';
 import { ForgotPasswordRequest } from '../../../core/models/ForgotPasswordRequest';
 import { LoginRequest } from '../../../core/models/LoginRequest';
 import { LoginResponse } from '../../../core/models/LoginResponse';
@@ -10,7 +11,6 @@ import { ResetPasswordRequest } from '../../../core/models/ResetPasswordRequest'
 import { UserRegistrationRequest } from '../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../core/models/Utilisateur';
 import { UserStateService } from '../user-state.service';
-import { ChangePhoto } from '../../../core/models/ChangePhoto';
 
 @Injectable({
   providedIn: 'root'
@@ -165,5 +165,14 @@ export class GestionuserService {
 
   deleteUser(id: number): Observable<string> {
     return this.http.delete(`${this.baseUrl}/delete/${id}`, { responseType: 'text' });
+  }
+
+  /**
+   * Vérifie si un email existe déjà dans la base de données
+   * @param email - L'email à vérifier
+   * @returns Observable<boolean> - true si l'email existe, false sinon
+   */
+  checkEmailExists(email: string): Observable<boolean> {
+    return this.http.get<boolean>(`${this.baseUrl}/check-email-exists?email=${encodeURIComponent(email)}`);
   }
 }

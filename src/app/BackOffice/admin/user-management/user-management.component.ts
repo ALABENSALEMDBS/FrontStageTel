@@ -1,7 +1,8 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { catchError, debounceTime, map, Observable, of, switchMap } from 'rxjs';
 import { UserRegistrationRequest } from '../../../../core/models/UserRegistrationRequest';
 import { Utilisateur } from '../../../../core/models/Utilisateur';
 import { GestionuserService } from '../../../services/gestionUserSerice/gestionuser.service';
@@ -57,10 +58,33 @@ export class UserManagementComponent implements OnInit {
     this.createUserForm = this.fb.group({
       nomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[a-zA-ZÀ-ÿ\s'-]+$/)]],
       prenomUser: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[a-zA-ZÀ-ÿ\s'-]+$/)]],
-      emailUser: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      emailUser: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)], [this.emailExistsValidator()]],
       numeroLigne: [0, [Validators.min(0), Validators.max(99999999), Validators.pattern(/^\d{0,8}$/)]],
       idRole: ['', [Validators.required]]
     });
+  }
+
+  /**
+   * Validateur asynchrone pour vérifier si l'email existe déjà
+   * @returns AsyncValidatorFn
+   */
+  emailExistsValidator(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      if (!control.value || control.value.trim() === '') {
+        return of(null);
+      }
+
+      // Débounce pour éviter trop d'appels à l'API
+      return of(control.value).pipe(
+        debounceTime(500), // Attendre 500ms après que l'utilisateur ait arrêté de taper
+        switchMap((email: string) => 
+          this.gestionUserService.checkEmailExists(email).pipe(
+            map((exists: boolean) => exists ? { emailExists: true } : null),
+            catchError(() => of(null)) // En cas d'erreur, on considère que l'email n'existe pas
+          )
+        )
+      );
+    };
   }
 
   ngOnInit(): void {
@@ -267,7 +291,13 @@ export class UserManagementComponent implements OnInit {
    */
   openCreateUserModal(): void {
     this.isCreateUserModalOpen = true;
-    this.createUserForm.reset();
+    this.createUserForm.reset({
+      nomUser: '',
+      prenomUser: '',
+      emailUser: '',
+      numeroLigne: 0,
+      idRole: ''
+    });
   }
 
   /**
@@ -283,8 +313,7 @@ export class UserManagementComponent implements OnInit {
    * Réinitialise le formulaire de création d'utilisateur
    */
   private resetCreateUserForm(): void {
-    this.createUserForm.reset();
-    this.createUserForm.patchValue({
+    this.createUserForm.reset({
       nomUser: '',
       prenomUser: '',
       emailUser: '',
